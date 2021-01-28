@@ -24,7 +24,9 @@ Engine_Superkeys : CroneEngine {
 				arg bufnum, amp, t_trig=0,envgate=1,
 				attack=0.005,decay=1,release=0.5,sustain=0.9,
 				sampleStart=0,sampleEnd=1,rate=1,pan=0,
-				lpf=18000,resonance=1.0,hpf=10,pop1=18000,pop2=18000;
+				lpf=20000,resonance=1.0,hpf=10,notch1=20000,notch2=20000,
+				secondsPerBeat=1,delayFeedback=1,delaySend=0,delayBeats=8,
+				bitcrushSampleRate=48000,bitcrushBits=32;
 				// vars
 				var ender,snd;
 
@@ -43,12 +45,16 @@ Engine_Superkeys : CroneEngine {
 				 	startPos: ((sampleStart*(rate>0))+(sampleEnd*(rate<0)))*BufFrames.kr(bufnum),
 				 	trigger:t_trig,
 				);
-		        snd = BRF.ar(snd,pop1,0.8);
-		        // snd = BRF.ar(snd,4000,1);
-		        snd = BRF.ar(snd,pop2,0.8);
-		        // snd = LPF.ar(snd,12000);
-	        	// snd = MoogFF.ar(snd,lpf,resonance);
-	        	// snd = HPF.ar(snd,hpf);
+		        snd = (notch1<20000)*BRF.ar(snd,pop1,0.8)+(notch1==20000)*snd;
+		        snd = (notch2<20000)*BRF.ar(snd,pop1,0.8)+(notch2==20000)*snd;
+		        snd = LPF.ar(snd,lpf);
+		        snd = HPF.ar(snd,hpf);
+		        snd = (bitcrushSampleRate<48000 || bitcrushBits < 32)*Decimator.ar(snd,bitcrushSampleRate,bitcrushBits)+(bitcrushSampleRate==48000 && bitcrushBits==32)*snd;
+		        snd = snd +
+		        	CombN.ar(
+		        		snd,
+						1,secondsPerBeat/delayBeats*2,secondsPerBeat/delayBeats*LinLin.kr(delayFeedback,0,1,2,128),0.75*delaySend // delayFeedback should vary between 2 and 128
+					); 
 				snd = Mix.ar([
 					Pan2.ar(snd[0],-1+(2*pan),amp),
 					Pan2.ar(snd[1],1+(2*pan),amp),
