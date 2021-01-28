@@ -75,19 +75,27 @@ function Superkeys:new(args)
   end
 
   -- lets add files
-  files=list_files(_path.code.."superkeys/samples/steinway model b/")
-  for _,fname in ipairs(files) do
-    if string.find(fname,".wav") then
-      pathname,filename,ext=string.match(fname,"(.-)([^\\/]-%.?([^%.\\/]*))$")
-      local foo=split_str(filename,".")
-      velocity_range={45,80}
-      if foo[2]=="pp" then
-        velocity_range={0,45}
-      elseif foo[2]=="ff" then
-        velocity_range={80,127}
+  local sample_folders=list_files(_path.code.."superkeys/samples/")
+  for _,sample_folder in ipairs(sample_folders) do
+    files=list_files(sample_folder)
+    for _,fname in ipairs(files) do
+      if string.find(fname,".wav") then
+	    -- WORK
+        pathname,filename,ext=string.match(fname,"(.-)([^\\/]-%.?([^%.\\/]*))$")
+	-- midival,dynamic,dynamics,variation,release
+        local foo=split_str(filename,".")
+	local midival = foo[1]
+	local dynamic = foo[2]
+	local dynamics = foo[3]
+        l:add({
+		name=sample_folder,
+		filename=fname,
+		midi=tonumber(foo[1]),
+		dynamic=tonumber(foo[2]),
+		dynamics=tonumber(foo[3]),
+		variation=tonumber(foo[4]),
+		release=foo[5]=="1"})
       end
-      local midi_value=foo[3]
-      l:add({name="steinway model b",filename=fname,midi=midi_value,velocity_range=velocity_range})
     end
   end
   files=list_files(_path.code.."superkeys/samples/marimba/")
@@ -261,7 +269,7 @@ function Superkeys:on(d)
     if rate==nil then
       rate=MusicUtil.note_num_to_freq(d.midi)/MusicUtil.note_num_to_freq(sample_closest_loaded.midi)*(MusicUtil.note_num_to_freq(d.midi+params:get(d.name.."_tranpose_sample"))/MusicUtil.note_num_to_freq(d.midi))
     end
-    local amp = params:get(instrument_name.."_amp")
+    local amp=params:get(instrument_name.."_amp")
     -- TODO: multiply amp by velocity curve?
     engine.superkeyson(
       voice_i,
@@ -304,7 +312,7 @@ function Superkeys:off(d)
 
       -- -- TODO: add a release sound effect
       -- TODO make the release less random
-      if self.instrument[d.name.." release"] ~= nil and math.random() < 1 then
+      if self.instrument[d.name.." release"]~=nil and math.random()<1 then
         self:on{name=d.name.." release",rate=1,midi=d.midi}
         clock.run(function()
           self:off{name=d.name.." release",midi=d.midi}
