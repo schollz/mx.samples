@@ -7,7 +7,7 @@ local Formatters=require 'formatters'
 local Superkeys={}
 
 local delay_rates_names = {"whole-note","half-note","quarter note","eighth note","sixteenth note"}
-local delay_rates = {4,2,1,1/2,1/4}
+local delay_rates = {1,2,4,8,16}
 
 local function current_time()
   return clock.get_beat_sec()*clock.get_beats()
@@ -113,7 +113,7 @@ function Superkeys:new(args)
   end
 
   -- add parameters
-  params:add_group("SUPERKEYS",#self.instrument*11)
+  params:add_group("SUPERKEYS",#self.instrument*12)
   local filter_freq=controlspec.new(20,20000,'exp',0,20000,'Hz')
   for instrument_name,_ in pairs(self.instrument) do 
     params:add_separator(instrument_name)
@@ -128,6 +128,12 @@ function Superkeys:new(args)
       id=instrument_name.."_tranpose_sample",
       name="transpose sample",
       controlspec=controlspec.new(-24,24,'lin',0,0,'note',1/49)
+    }
+    params:add {
+      type='control',
+      id=instrument_name.."_pan",
+      name="pan",
+      controlspec=controlspec.new(-1,1,'lin',0,0)
     }
     params:add {
       type='control',
@@ -206,6 +212,7 @@ end
 function Superkeys:on(d)
   -- sk:on({name="piano",midi=40,velocity=60})
   -- {name="something", midi=40, velocity=10}
+  d.midi = d.midi + params:get(d.name.."_tranpose_midi")
   if d.velocity==nil then
     d.velocity=127
   end
@@ -234,23 +241,30 @@ function Superkeys:on(d)
 
     -- play it from the engine
     print("superkeys: on "..d.name..d.midi)
-    local pan = 0
-    local pop1=18000
-    local pop2=18000
+    local pan = params:get(d.name.."_pan")
     if d.name == "piano" then 
       pan = util.linlin(21,108,-0.85,0.85,d.midi)
-      pop1=5000
-      pop2=6900
+      -- pop1=5000
+      -- pop2=6900
     end
     print("pan "..pan)
     engine.superkeyson(
       voice_i,
       sample_closest_loaded.buffer,
-      MusicUtil.note_num_to_freq(d.midi)/MusicUtil.note_num_to_freq(sample_closest_loaded.midi),
+      MusicUtil.note_num_to_freq(d.midi)/MusicUtil.note_num_to_freq(sample_closest_loaded.midi)*(MusicUtil.note_num_to_freq(d.midi+params:get(d.name.."_tranpose_sample"))/MusicUtil.note_num_to_freq(d.midi)),
       1.0,
       pan,
-      pop1,
-      pop2)
+      params:get(d.name.."_lpf_superkeys"),
+      params:get(d.name.."_hpf_superkeys"),
+      params:get(d.name.."_notch1_superkeys"),
+      params:get(d.name.."_notch2_superkeys"),
+      params:get(d.name.."_bitcrusher_sample"),
+      params:get(d.name.."_bitcrusher_bits"),
+      clock.get_beat_sec(),
+      delay_rates[params:get(d.name.."_delay_rate")],
+      params:get(d.name.."_delay_feedback"),
+      params:get(d.name.."_delay_send"),
+      )
 end
 
   -- load sample if not loaded

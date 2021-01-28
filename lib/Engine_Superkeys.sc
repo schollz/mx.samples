@@ -25,8 +25,8 @@ Engine_Superkeys : CroneEngine {
 				attack=0.005,decay=1,release=0.5,sustain=0.9,
 				sampleStart=0,sampleEnd=1,rate=1,pan=0,
 				lpf=20000,resonance=1.0,hpf=10,notch1=20000,notch2=20000,
-				secondsPerBeat=1,delayFeedback=1,delaySend=0,delayBeats=8,
-				bitcrushSampleRate=48000,bitcrushBits=32;
+				bitcrushSampleRate=48000,bitcrushBits=32,
+				secondsPerBeat=1,delayBeats=8,delayFeedback=1,delaySend=0;
 				// vars
 				var ender,snd;
 
@@ -45,10 +45,10 @@ Engine_Superkeys : CroneEngine {
 				 	startPos: ((sampleStart*(rate>0))+(sampleEnd*(rate<0)))*BufFrames.kr(bufnum),
 				 	trigger:t_trig,
 				);
-		        snd = (notch1<20000)*BRF.ar(snd,pop1,0.8)+(notch1==20000)*snd;
-		        snd = (notch2<20000)*BRF.ar(snd,pop1,0.8)+(notch2==20000)*snd;
 		        snd = LPF.ar(snd,lpf);
 		        snd = HPF.ar(snd,hpf);
+		        snd = (notch1<20000)*BRF.ar(snd,pop1,0.8)+(notch1==20000)*snd;
+		        snd = (notch2<20000)*BRF.ar(snd,pop1,0.8)+(notch2==20000)*snd;
 		        snd = (bitcrushSampleRate<48000 || bitcrushBits < 32)*Decimator.ar(snd,bitcrushSampleRate,bitcrushBits)+(bitcrushSampleRate==48000 && bitcrushBits==32)*snd;
 		        snd = snd +
 		        	CombN.ar(
@@ -74,7 +74,7 @@ Engine_Superkeys : CroneEngine {
 			sampleBuffSuperkeys[msg[1]] = Buffer.read(context.server,msg[2]);
 		});
 
-		this.addCommand("superkeyson","iifffff", { arg msg;
+		this.addCommand("superkeyson","iifffffffiiffff", { arg msg;
 			// lua is sending 1-index
 			samplerPlayerSuperkeys[msg[1]-1].set(
 				\t_trig,1,
@@ -83,8 +83,16 @@ Engine_Superkeys : CroneEngine {
 				\rate,msg[3],
 				\amp,msg[4],
 				\pan,msg[5],
-				\pop1,msg[6],
-				\pop2,msg[7],
+				\lpf,msg[6],
+				\hpf,msg[7],
+				\notch1,msg[8],
+				\notch2,msg[9],
+				\bitcrushSampleRate,msg[10],
+				\bitcrushBits,msg[11],
+				\secondsPerBeat,msg[12],
+				\delayBeats,msg[13],
+				\delayFeedback,msg[14],
+				\delaySend,msg[15],
 			);
 		});
 
