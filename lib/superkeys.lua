@@ -75,10 +75,9 @@ function Superkeys:new(args)
   end
 
   -- lets add files
-  files=list_files(_path.code.."superkeys/samples/piano/")
+  files=list_files(_path.code.."superkeys/samples/steinway model b/")
   for _,fname in ipairs(files) do
     if string.find(fname,".wav") then
-      -- print("adding "..fname)
       pathname,filename,ext=string.match(fname,"(.-)([^\\/]-%.?([^%.\\/]*))$")
       local foo=split_str(filename,".")
       velocity_range={45,80}
@@ -88,7 +87,7 @@ function Superkeys:new(args)
         velocity_range={80,127}
       end
       local midi_value=foo[3]
-      l:add({name="piano",filename=fname,midi=midi_value,velocity_range=velocity_range})
+      l:add({name="steinway model b",filename=fname,midi=midi_value,velocity_range=velocity_range})
     end
   end
   files=list_files(_path.code.."superkeys/samples/marimba/")
@@ -117,6 +116,11 @@ function Superkeys:new(args)
   local filter_freq=controlspec.new(20,20000,'exp',0,20000,'Hz')
   for instrument_name,_ in pairs(self.instrument) do
     params:add_separator(instrument_name)
+    params:add {
+      type='control',
+      id=instrument_name.."_amp",
+      name="amp",
+    controlspec=controlspec.new(0,1,'lin',0,1.0,'amp')}
     params:add {
       type='control',
       id=instrument_name.."_tranpose_midi",
@@ -257,11 +261,13 @@ function Superkeys:on(d)
     if rate==nil then
       rate=MusicUtil.note_num_to_freq(d.midi)/MusicUtil.note_num_to_freq(sample_closest_loaded.midi)*(MusicUtil.note_num_to_freq(d.midi+params:get(d.name.."_tranpose_sample"))/MusicUtil.note_num_to_freq(d.midi))
     end
+    local amp = params:get(instrument_name.."_amp")
+    -- TODO: multiply amp by velocity curve?
     engine.superkeyson(
       voice_i,
       sample_closest_loaded.buffer,
       rate,
-      1.0,
+      amp,
       pan,
       params:get(d.name.."_lpf_superkeys"),
       params:get(d.name.."_hpf_superkeys"),
@@ -297,12 +303,13 @@ function Superkeys:off(d)
       engine.superkeysoff(i)
 
       -- -- TODO: add a release sound effect
-      -- if string.find(d.name,"piano") and not string.find(d.name,"release") then
-      --   self:on{name="piano release",rate=1,midi=d.midi}
-      --   clock.run(function()
-      --     self:off{name="piano release",midi=d.midi}
-      --   end)
-      -- end
+      -- TODO make the release less random
+      if self.instrument[d.name.." release"] ~= nil and math.random() < 1 then
+        self:on{name=d.name.." release",rate=1,midi=d.midi}
+        clock.run(function()
+          self:off{name=d.name.." release",midi=d.midi}
+        end)
+      end
       break
     end
   end
