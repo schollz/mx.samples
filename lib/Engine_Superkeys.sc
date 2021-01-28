@@ -14,11 +14,12 @@ Engine_Superkeys : CroneEngine {
 
 	alloc {
 
-		sampleBuffSuperkeys = Array.fill(12, { arg i; 
-			Buffer.new(context.server); 
+		sampleBuffSuperkeys = Array.fill(200, { arg i; 
+			// Buffer.read(context.server, "/home/we/dust/code/superkeys/samples/silence.wav"); 
+			Buffer.new(context.server);
 		});
 
-		(0..12).do({arg i; 
+		(0..13).do({arg i; 
 			SynthDef("player"++i,{ 
 				arg bufnum, amp, t_trig=0,envgate=1,
 				attack=0.01,decay=1,release=0.5,sustain=0.8,
@@ -42,25 +43,25 @@ Engine_Superkeys : CroneEngine {
 				 	startPos: ((sampleStart*(rate>0))+(sampleEnd*(rate<0)))*BufFrames.kr(bufnum),
 				 	trigger:t_trig,
 				);
-	        	snd = MoogFF.ar(snd,lpf,resonance);
-	        	snd = HPF.ar(snd,hpf);
+	        	// snd = MoogFF.ar(snd,lpf,resonance);
+	        	// snd = HPF.ar(snd,hpf);
 				snd = Mix.ar([
-					Pan2.ar(bufsnd[0],-1+(2*pan),amp),
-					Pan2.ar(bufsnd[1],1+(2*pan),amp),
+					Pan2.ar(snd[0],-1+(2*pan),amp),
+					Pan2.ar(snd[1],1+(2*pan),amp),
 				]);
 				snd = snd * amp * ender;
 				Out.ar(0,snd)
 			}).add;	
 		});
 
-		samplerPlayerSuperkeys = Array.fill(6,{arg i;
-			Synth("player"++i,[\bufnum:sampleBuffSuperkeys[i]], target:context.xg);
+		samplerPlayerSuperkeys = Array.fill(14,{arg i;
+			Synth("player"++i, target:context.xg);
 		});
 
 		this.addCommand("superkeysload","is", { arg msg;
-			// lua is sending 1-index
-			sampleBuffSuperkeys[msg[1]-1].free;
-			sampleBuffSuperkeys[msg[1]-1] = Buffer.read(context.server,msg[2]);
+			// lua is sending 0-index
+			sampleBuffSuperkeys[msg[1]].free;
+			sampleBuffSuperkeys[msg[1]] = Buffer.read(context.server,msg[2]);
 		});
 
 		this.addCommand("superkeyson","iiff", { arg msg;
@@ -84,7 +85,7 @@ Engine_Superkeys : CroneEngine {
 	}
 
 	free {
-		(0..12).do({arg i; sampleBuffSuperkeys[i].free});
-		(0..12).do({arg i; samplerPlayerSuperkeys[i].free});
+		(0..99).do({arg i; sampleBuffSuperkeys[i].free});
+		(0..13	).do({arg i; samplerPlayerSuperkeys[i].free});
 	}
 }

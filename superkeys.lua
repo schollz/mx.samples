@@ -7,25 +7,35 @@
 superkeys=include("superkeys/lib/superkeys")
 
 engine.name="Superkeys"
-sk=nil
+skeys=nil
 
 function init()
-  sk=superkeys:new()
+  skeys=superkeys:new()
   -- lets add files
-  files=list_files(_path.code.."superkeys/sample/piano/")
+  files=list_files(_path.code.."superkeys/samples/piano/")
   for _,fname in ipairs(files) do
     if string.find(fname,".wav") then
       print("adding "..fname)
-      pathname,filename,ext=string.match(x,"(.-)([^\\/]-%.?([^%.\\/]*))$")
-      local foo=split(filename,".")
+      pathname,filename,ext=string.match(fname,"(.-)([^\\/]-%.?([^%.\\/]*))$")
+      local foo=split_str(filename,".")
       velocity_range={30,100}
       if foo[2]=="pp" then
-        velocity_range={0,30}
+        velocity_range={0,45}
       elseif foo[2]=="ff" then
-        velocity_range={100,127}
+        velocity_range={70,127}
       end
-      midi=foo[3]
-      sk:add{name="piano",sample=fname,midi=midi,velocity_range=velocity_range}
+      local midi_value=foo[3]
+      skeys:add({name="piano",filename=fname,midi=midi_value,velocity_range=velocity_range})
+    end
+  end
+
+  m = midi.connect(3)
+  m.event = function(data) 
+    tab.print(data) 
+    if data[1]==144 then 
+      skeys:on({name="piano",midi=data[2],velocity=data[3]})
+    elseif data[1]==128 then 
+      skeys:off({name="piano",midi=data[2]})
     end
   end
 
@@ -37,7 +47,11 @@ function enc(k,d)
 end
 
 function key(k,z)
-
+  if z==1 then 
+    skeys:on({name="piano",midi=60,velocity=60})
+  elseif z==0 then
+    skeys:off({name="piano",midi=60})
+  end
 end
 
 function redraw_clock() -- our grid redraw clock
@@ -57,7 +71,6 @@ end
 function rerun()
   norns.script.load(norns.state.script)
 end
-
 function list_files(d,recurisve)
   if recursive==nil then
     recursive=false
@@ -97,7 +110,7 @@ function _list_files(d,files,recursive)
   return files
 end
 
-function split(inputstr,sep)
+function split_str(inputstr,sep)
   if sep==nil then
     sep="%s"
   end
