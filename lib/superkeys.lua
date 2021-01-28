@@ -295,6 +295,14 @@ function Superkeys:off(d)
       print("superkeys: turning off "..d.name..":"..d.midi)
       self.voice[i].active={name="",midi=0}
       engine.superkeysoff(i)
+
+      -- -- TODO: add a release sound effect
+      -- if string.find(d.name,"piano") and not string.find(d.name,"release") then
+      --   self:on{name="piano release",rate=1,midi=d.midi}
+      --   clock.run(function()
+      --     self:off{name="piano release",midi=d.midi}
+      --   end)
+      -- end
       break
     end
   end
