@@ -1,13 +1,13 @@
 -- modulate for samples
 --
 
-local MusicUtil = require "musicutil"
+local MusicUtil=require "musicutil"
 local Formatters=require 'formatters'
 
 local Superkeys={}
 
-local delay_rates_names = {"whole-note","half-note","quarter note","eighth note","sixteenth note"}
-local delay_rates = {1,2,4,8,16}
+local delay_rates_names={"whole-note","half-note","quarter note","eighth note","sixteenth note"}
+local delay_rates={1,2,4,8,16}
 
 local function current_time()
   return clock.get_beat_sec()*clock.get_beats()
@@ -115,26 +115,23 @@ function Superkeys:new(args)
   -- add parameters
   params:add_group("SUPERKEYS",#self.instrument*12)
   local filter_freq=controlspec.new(20,20000,'exp',0,20000,'Hz')
-  for instrument_name,_ in pairs(self.instrument) do 
+  for instrument_name,_ in pairs(self.instrument) do
     params:add_separator(instrument_name)
     params:add {
       type='control',
       id=instrument_name.."_tranpose_midi",
       name="transpose midi",
-      controlspec=controlspec.new(-24,24,'lin',0,0,'note',1/49)
-    }
+    controlspec=controlspec.new(-24,24,'lin',0,0,'note',1/49)}
     params:add {
       type='control',
       id=instrument_name.."_tranpose_sample",
       name="transpose sample",
-      controlspec=controlspec.new(-24,24,'lin',0,0,'note',1/49)
-    }
+    controlspec=controlspec.new(-24,24,'lin',0,0,'note',1/49)}
     params:add {
       type='control',
       id=instrument_name.."_pan",
       name="pan",
-      controlspec=controlspec.new(-1,1,'lin',0,0)
-    }
+    controlspec=controlspec.new(-1,1,'lin',0,0)}
     params:add {
       type='control',
       id=instrument_name..'_lpf_superkeys',
@@ -167,27 +164,23 @@ function Superkeys:new(args)
       type='control',
       id=instrument_name.."_delay_send",
       name="delay send"
-      controlspec=controlspec.new(0,100,'lin',0,0,'%',1/100)
-    }
+    controlspec=controlspec.new(0,100,'lin',0,0,'%',1/100)}
     params:add {
       type='control',
       id=instrument_name.."_delay_feedback",
       name="delay feedback"
-      controlspec=controlspec.new(0,100,'lin',0,0,'%',1/100)
-    }
+    controlspec=controlspec.new(0,100,'lin',0,0,'%',1/100)}
     params:add_option(instrument_name.."_delay_rate","delay rate",delay_rates_names)
     params:add {
       type='control',
       id=instrument_name.."_bitcrusher_sample",
       name="bitcrush sample rate"
-      controlspec=controlspec.new(1000,48000,'exp',0,48000,'hz')
-    }
+    controlspec=controlspec.new(1000,48000,'exp',0,48000,'hz')}
     params:add {
       type='control',
       id=instrument_name.."_bitcrusher_bits",
       name="bitcrush"
-      controlspec=controlspec.new(4,32,'lin',0,32,'bits',1/28)
-    }
+    controlspec=controlspec.new(4,32,'lin',0,32,'bits',1/28)}
   end
 
 
@@ -203,7 +196,7 @@ function Superkeys:add(sample)
 
   -- add sample to instrument
   sample.buffer=-1
-  if self.instrument[sample.name] == nil then 
+  if self.instrument[sample.name]==nil then
     self.instrument[sample.name]={}
   end
   table.insert(self.instrument[sample.name],sample)
@@ -212,28 +205,28 @@ end
 function Superkeys:on(d)
   -- sk:on({name="piano",midi=40,velocity=60,rate=overrides_midi})
   -- {name="something", midi=40, velocity=10}
-  d.midi = d.midi + params:get(d.name.."_tranpose_midi")
+  d.midi=d.midi+params:get(d.name.."_tranpose_midi")
   if d.velocity==nil then
     d.velocity=127
   end
   -- find the sample that is closest to the midi
   -- and within the velocity range
   local sample_closest={buffer=-2,midi=-10000}
-  local sample_closest_loaded={buffer=-2,midi=-10000}          
+  local sample_closest_loaded={buffer=-2,midi=-10000}
 
   -- go through the samples randomly
-  local sample_is = {}
+  local sample_is={}
   for i,sample in ipairs(self.instrument[d.name]) do
     table.insert(sample_is,i)
   end
   -- shuffle
-  local sample_is_shuffled = {}
-  for i, v in ipairs(sample_is) do
-    local pos = math.random(1, #sample_is_shuffled+1)
-    table.insert(sample_is_shuffled, pos, v)
+  local sample_is_shuffled={}
+  for i,v in ipairs(sample_is) do
+    local pos=math.random(1,#sample_is_shuffled+1)
+    table.insert(sample_is_shuffled,pos,v)
   end
-  for _,i in ipairs(sample_is_shuffled) do 
-    local sample = self.instrument[d.name][i]
+  for _,i in ipairs(sample_is_shuffled) do
+    local sample=self.instrument[d.name][i]
     if d.velocity>=sample.velocity_range[1] and d.velocity<=sample.velocity_range[2] then
       if math.abs(sample.midi-d.midi)<math.abs(sample_closest.midi-d.midi) then
         sample_closest=sample
@@ -254,15 +247,15 @@ function Superkeys:on(d)
 
     -- play it from the engine
     print("superkeys: on "..d.name..d.midi)
-    local pan = params:get(d.name.."_pan")
-    if d.name == "piano" then 
-      pan = util.linlin(21,108,-0.85,0.85,d.midi)
+    local pan=params:get(d.name.."_pan")
+    if d.name=="piano" then
+      pan=util.linlin(21,108,-0.85,0.85,d.midi)
       -- pop1=5000
       -- pop2=6900
     end
-    local rate = d.rate 
-    if rate == nil then 
-      rate =  MusicUtil.note_num_to_freq(d.midi)/MusicUtil.note_num_to_freq(sample_closest_loaded.midi)*(MusicUtil.note_num_to_freq(d.midi+params:get(d.name.."_tranpose_sample"))/MusicUtil.note_num_to_freq(d.midi))
+    local rate=d.rate
+    if rate==nil then
+      rate=MusicUtil.note_num_to_freq(d.midi)/MusicUtil.note_num_to_freq(sample_closest_loaded.midi)*(MusicUtil.note_num_to_freq(d.midi+params:get(d.name.."_tranpose_sample"))/MusicUtil.note_num_to_freq(d.midi))
     end
     engine.superkeyson(
       voice_i,
@@ -280,14 +273,14 @@ function Superkeys:on(d)
       delay_rates[params:get(d.name.."_delay_rate")],
       params:get(d.name.."_delay_feedback"),
       params:get(d.name.."_delay_send"),
-      )
-end
+    )
+  end
 
   -- load sample if not loaded
-  if sample_closest.buffer==-1 then 
-      self.instrument[d.name][sample_closest.i].buffer=self.buffer
-      engine.superkeysload(self.buffer,sample_closest.filename)
-      self.buffer = self.buffer + 1
+  if sample_closest.buffer==-1 then
+    self.instrument[d.name][sample_closest.i].buffer=self.buffer
+    engine.superkeysload(self.buffer,sample_closest.filename)
+    self.buffer=self.buffer+1
   end
 
 end
