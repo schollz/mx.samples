@@ -35,6 +35,7 @@
 			numChannels:2,
 			bufnum:bufnum,
 			pointer:LFSaw.ar(1/(BufDur.kr(bufnum)/timeStretch)).range(0,1), 
+			//pointer:Line.ar(dur:BufDur.kr(bufnum)/timeStretch),
 			freqScale:rate,
 			windowSize:0.3,
 			overlaps:8,
