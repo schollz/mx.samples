@@ -76,46 +76,24 @@ function Superkeys:new(args)
 
   -- lets add files
   local sample_folders=list_files(_path.code.."superkeys/samples/")
-  for _,sample_folder in ipairs(sample_folders) do
-    files=list_files(sample_folder)
+  for _,sample_folder_path in ipairs(sample_folders) do
+    _,sample_folder,_=string.match(fname,"(.-)([^\\/]-%.?([^%.\\/]*))$")
+    files=list_files(sample_folder_path)
     for _,fname in ipairs(files) do
       if string.find(fname,".wav") then
-	    -- WORK
+        -- WORK
         pathname,filename,ext=string.match(fname,"(.-)([^\\/]-%.?([^%.\\/]*))$")
-	-- midival,dynamic,dynamics,variation,release
+        -- midival,dynamic,dynamics,variation,release
         local foo=split_str(filename,".")
-	local midival = foo[1]
-	local dynamic = foo[2]
-	local dynamics = foo[3]
         l:add({
-		name=sample_folder,
-		filename=fname,
-		midi=tonumber(foo[1]),
-		dynamic=tonumber(foo[2]),
-		dynamics=tonumber(foo[3]),
-		variation=tonumber(foo[4]),
-		release=foo[5]=="1"})
+          name=sample_folder,
+          filename=fname,
+          midi=tonumber(foo[1]),
+          dynamic=tonumber(foo[2]),
+          dynamics=tonumber(foo[3]),
+          variation=tonumber(foo[4]),
+        release=foo[5]=="1"})
       end
-    end
-  end
-  files=list_files(_path.code.."superkeys/samples/marimba/")
-  for _,fname in ipairs(files) do
-    if string.find(fname,".wav") then
-      -- print("adding "..fname)
-      pathname,filename,ext=string.match(fname,"(.-)([^\\/]-%.?([^%.\\/]*))$")
-      local foo=split_str(filename,".")
-      local midi_value=foo[3]
-      l:add{name="marimba",filename=fname,midi=tonumber(midi_value)}
-    end
-  end
-  files=list_files(_path.code.."superkeys/samples/vibraphone/")
-  for _,fname in ipairs(files) do
-    if string.find(fname,".wav") then
-      -- print("adding "..fname)
-      pathname,filename,ext=string.match(fname,"(.-)([^\\/]-%.?([^%.\\/]*))$")
-      local foo=split_str(filename,".")
-      local midi_value=foo[3]
-      l:add{name="vibraphone",filename=fname,midi=tonumber(midi_value)}
     end
   end
 
