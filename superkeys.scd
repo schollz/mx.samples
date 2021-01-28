@@ -19,6 +19,18 @@
 		gate: envgate,
 	);
 
+                                bufsnd = BufRd.ar(2,bufnum,
+                                        Phasor.ar(
+                                                trig:t_trig,
+                                                rate:BufRateScale.kr(sampleBufnum)*rate,
+                                                start:((sampleStart*(rate>0))+(sampleEnd*(rate<0))+rate.sign*0.2*(Line.kr(dur:)>=1))*BufFrames.kr(sampleBufnum),
+                                                end:((sampleEnd*(rate>0))+(sampleStart*(rate<0)))*BufFrames.kr(sampleBufnum),
+                                                resetPos:((sampleStart*(rate>0))+(sampleEnd*(rate<0)))*BufFrames.kr(sampleBufnum)
+                                        )
+                                        loop:0,
+                                        interpolation:1
+                                );
+		
 		snd = Warp1.ar(
 			numChannels:1,
 			bufnum:bufnum,
