@@ -23,21 +23,20 @@ function Superkeys:new(args)
 end
 
 function Superkeys:add(sample)
-  -- {name="something", filename="~/piano_mf_c4.wav", midi=40, velocity_range={0,127},buffer=TBD}
+  -- {name="something", filename="~/piano_mf_c4.wav", midi=40, velocity_range={0,127},buffer=TBD,loaded=TBD}
   print("superkeys: add")
   tab.print(sample)
   if sample.velocity_range==nil then
     sample.velocity_range={0,127}
   end
 
-  -- load sample into a buffer
-  sample.buffer=self.buffer
+  -- add sample to instrument
+  
+  sample.buffer=-1
   if self.instrument[sample.name] == nil then 
     self.instrument[sample.name]={}
   end
   table.insert(self.instrument[sample.name],sample)
-  engine.superkeysload(sample.buffer,sample.filename)
-  self.buffer=self.buffer+1
 end
 
 function Superkeys:on(d)
@@ -48,33 +47,55 @@ function Superkeys:on(d)
   end
   -- find the sample that is closest to the midi
   -- and within the velocity range
-  local sample_closest={buffer=0,midi=0}
+  local sample_closest={buffer=-2,midi=-10000}
+  local sample_closest_loaded={buffer=-2,midi=-10000}          
   for i,sample in ipairs(self.instrument[d.name]) do
     if d.velocity>=sample.velocity_range[1] and d.velocity<=sample.velocity_range[2] then
       if math.abs(sample.midi-d.midi)<math.abs(sample_closest.midi-d.midi) then
-        tab.print(sample)
-        sample_closest={buffer=sample.buffer,midi=sample.midi}
+        sample_closest=sample
+        sample_closest.i=i
+      end
+      if math.abs(sample.midi-d.midi)<math.abs(sample_closest_loaded.midi-d.midi) and sample.buffer>-1 then
+        sample_closest_loaded=sample
+        sample_closest_loaded.i=i
       end
     end
   end
 
-  if sample_closest.buffer==0 then
-    print("superkeys: could not find sample")
-    tab.print(d)
-    do return end
+
+  if sample_closest_loaded.buffer>-1 then
+    -- assign the new voice
+    local voice_i=self:get_voice()
+    self.voice[voice_i].active={name=d.name,midi=d.midi}
+
+    -- play it from the engine
+    print("superkeys: on "..d.name..d.midi)
+    local pan = 0
+    local pop1=18000
+    local pop2=18000
+    if d.name == "piano" then 
+      pan = util.linlin(21,108,-0.85,0.85,d.midi)
+      pop1=5000
+      pop2=6900
+    end
+    print("pan "..pan)
+    engine.superkeyson(
+      voice_i,
+      sample_closest_loaded.buffer,
+      MusicUtil.note_num_to_freq(d.midi)/MusicUtil.note_num_to_freq(sample_closest_loaded.midi),
+      1.0,
+      pan,
+      pop1,
+      pop2)
+end
+
+  -- load sample if not loaded
+  if sample_closest.buffer==-1 then 
+      self.instrument[d.name][sample_closest.i].buffer=self.buffer
+      engine.superkeysload(self.buffer,sample_closest.filename)
+      self.buffer = self.buffer + 1
   end
 
-  -- assign the new voice
-  local voice_i=self:get_voice()
-  self.voice[voice_i].active={name=d.name,midi=d.midi}
-
-  -- play it from the engine
-  print("superkeys: on "..d.name..d.midi)
-  engine.superkeyson(
-    voice_i,
-    sample_closest.buffer,
-    MusicUtil.note_num_to_freq(d.midi)/MusicUtil.note_num_to_freq(sample_closest.midi),
-    1.0)
 end
 
 function Superkeys:off(d)

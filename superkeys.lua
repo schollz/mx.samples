@@ -15,20 +15,40 @@ function init()
   files=list_files(_path.code.."superkeys/samples/piano/")
   for _,fname in ipairs(files) do
     if string.find(fname,".wav") then
-      print("adding "..fname)
+      -- print("adding "..fname)
       pathname,filename,ext=string.match(fname,"(.-)([^\\/]-%.?([^%.\\/]*))$")
       local foo=split_str(filename,".")
-      velocity_range={30,100}
+      velocity_range={45,80}
       if foo[2]=="pp" then
         velocity_range={0,45}
       elseif foo[2]=="ff" then
-        velocity_range={70,127}
+        velocity_range={80,127}
       end
       local midi_value=foo[3]
       skeys:add({name="piano",filename=fname,midi=midi_value,velocity_range=velocity_range})
     end
   end
-
+  -- files=list_files(_path.code.."superkeys/samples/marimba/")
+  -- for _,fname in ipairs(files) do
+  --   if string.find(fname,".wav") then
+  --     -- print("adding "..fname)
+  --     pathname,filename,ext=string.match(fname,"(.-)([^\\/]-%.?([^%.\\/]*))$")
+  --     local foo=split_str(filename,".")
+  --     local midi_value=foo[3]
+  --     skeys:add{name="marimba",filename=fname,midi=tonumber(midi_value)}
+  --   end
+  -- end
+  -- files=list_files(_path.code.."superkeys/samples/vibraphone/")
+  -- for _,fname in ipairs(files) do
+  --   if string.find(fname,".wav") then
+  --     -- print("adding "..fname)
+  --     pathname,filename,ext=string.match(fname,"(.-)([^\\/]-%.?([^%.\\/]*))$")
+  --     local foo=split_str(filename,".")
+  --     local midi_value=foo[3]
+  --     skeys:add{name="vibraphone",filename=fname,midi=tonumber(midi_value)}
+  --   end
+  -- end
+  print("added files")
   m = midi.connect(3)
   m.event = function(data) 
     tab.print(data) 
