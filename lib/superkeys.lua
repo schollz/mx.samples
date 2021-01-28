@@ -9,6 +9,10 @@ function Superkeys:new(args)
   local args=args==nil and {} or args
   l.instrument={} -- map instrument name to list of samples
   l.buffer=0
+  l.voice={} -- list of voices and how hold they are
+  for i=1,12 do
+    l.voice[i]={age=current_time(),active={name="",midi=0}}
+  end
   return l
 end
 
@@ -40,21 +44,55 @@ function Superkeys:on(d)
     end
   end
 
-  if sample_closest.buffer == 0 then
-	  print("superkeys: could not find sample")
-	  tab.print(d)
-	  do return end
+  if sample_closest.buffer==0 then
+    print("superkeys: could not find sample")
+    tab.print(d)
+    do return end
   end
 
-  -- TODO: figure out which voice to use
-  
+  -- assign the new voice
+  local voice_i=get_voice()
+  self.voice[voice_i].active={name=d.name,midi=d.midi}
+
   -- play it from the engine
-  engine.superkeysplay(
-	sample_closest.buffer,
-	sample_closest.midi,
-	d.midi,
-	d.velocity,
+  engine.superkeyson(
+    voice_i,
+    sample_closest.buffer,
+    sample_closest.midi,
+    d.midi,
+    d.velocity,
   )
+end
+
+function Superkeys:off(d)
+  -- {name="something", midi=40}
+
+  -- find the voice being used for this one
+  for i,voice in ipairs(self.voice) do
+    if voice.active.name==d.name and voice.active.midi==d.midi then
+      -- this is the one!
+      print("superkeys: turning off "..d.name..":"..d.midi)
+      self.voice[i].active={name="",midi=0}
+      engine.superkeysoff(i)
+      break
+    end
+  end
+end
+
+function Superkeys:get_voice()
+  -- gets voice based on the oldest
+  local oldest={i=0,age=current_time()}
+  for i,voice in ipairs(self.voice) do
+    if voice.age<oldest.age then
+      oldest={i=i,age=voice.age}
+    end
+  end
+  self.voice[oldest.i].age=current_time()
+  return oldest.i
+end
+
+local function current_time()
+  return clock.get_beat_sec()*clock.get_beats()
 end
 
 return Superkeys

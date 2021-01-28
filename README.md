@@ -1,12 +1,8 @@
 # superkeys
 
-a voice allocator / sample player for norns
 
-can input multiple samples of the same type (piano keys a2,c4,g5, etc.) and the best one will be selected and pitched.
+this one allows you to add any number of samples for the same instrument - the closest one in pitch will be used. you can also add velocity ranges for each instrument in the case you have a soft *and* loud sound for your instrument.
 
+## todo
 
-clipping samples
-
-```bash
-ffmpeg -i .\Piano.ff.D5.aiff -af "silenceremove=1:0:-50dB" -y -to 00:00:05 test.wav
- ```
+- [ ] add timestretching?
