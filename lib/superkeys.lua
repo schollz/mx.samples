@@ -210,7 +210,7 @@ function Superkeys:add(sample)
 end
 
 function Superkeys:on(d)
-  -- sk:on({name="piano",midi=40,velocity=60})
+  -- sk:on({name="piano",midi=40,velocity=60,rate=overrides_midi})
   -- {name="something", midi=40, velocity=10}
   d.midi = d.midi + params:get(d.name.."_tranpose_midi")
   if d.velocity==nil then
@@ -220,7 +220,20 @@ function Superkeys:on(d)
   -- and within the velocity range
   local sample_closest={buffer=-2,midi=-10000}
   local sample_closest_loaded={buffer=-2,midi=-10000}          
+
+  -- go through the samples randomly
+  local sample_is = {}
   for i,sample in ipairs(self.instrument[d.name]) do
+    table.insert(sample_is,i)
+  end
+  -- shuffle
+  local sample_is_shuffled = {}
+  for i, v in ipairs(sample_is) do
+    local pos = math.random(1, #sample_is_shuffled+1)
+    table.insert(sample_is_shuffled, pos, v)
+  end
+  for _,i in ipairs(sample_is_shuffled) do 
+    local sample = self.instrument[d.name][i]
     if d.velocity>=sample.velocity_range[1] and d.velocity<=sample.velocity_range[2] then
       if math.abs(sample.midi-d.midi)<math.abs(sample_closest.midi-d.midi) then
         sample_closest=sample
@@ -247,11 +260,14 @@ function Superkeys:on(d)
       -- pop1=5000
       -- pop2=6900
     end
-    print("pan "..pan)
+    local rate = d.rate 
+    if rate == nil then 
+      rate =  MusicUtil.note_num_to_freq(d.midi)/MusicUtil.note_num_to_freq(sample_closest_loaded.midi)*(MusicUtil.note_num_to_freq(d.midi+params:get(d.name.."_tranpose_sample"))/MusicUtil.note_num_to_freq(d.midi))
+    end
     engine.superkeyson(
       voice_i,
       sample_closest_loaded.buffer,
-      MusicUtil.note_num_to_freq(d.midi)/MusicUtil.note_num_to_freq(sample_closest_loaded.midi)*(MusicUtil.note_num_to_freq(d.midi+params:get(d.name.."_tranpose_sample"))/MusicUtil.note_num_to_freq(d.midi)),
+      rate,
       1.0,
       pan,
       params:get(d.name.."_lpf_superkeys"),
