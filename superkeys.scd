@@ -32,9 +32,9 @@
                                 );
 		
 		snd = Warp1.ar(
-			numChannels:1,
+			numChannels:2,
 			bufnum:bufnum,
-			pointer:Line.ar(dur:BufDur.kr(bufnum)/timeStretch),
+			pointer:LFSaw.ar(1/(BufDur.kr(bufnum)/timeStretch)).range(0,1), 
 			freqScale:rate,
 			windowSize:0.3,
 			overlaps:8,
