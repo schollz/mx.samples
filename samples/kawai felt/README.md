@@ -6,11 +6,19 @@ enter your email and then right-click on 'Kawai Felt Piano Samples (700 mb)'. th
 ```
 wget <link address>
 
-# change name
+# change name and unzip
 mv *dl* dl.zip
 unzip dl.zip
+
+# remove unnessecary
 rm dl.zip
 rm -rf Data *nkc *nki *nkr *MACOSX* Resources
+
+# convert to format
+python3 convert.py
+
+# if successful then 
+rm -rf 'Kawai Felt Piano Samples' 
 ```
 
 
