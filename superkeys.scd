@@ -18,7 +18,7 @@
 		),
 		gate: envgate,
 	);
-
+/*
                                 bufsnd = BufRd.ar(2,bufnum,
                                         Phasor.ar(
                                                 trig:t_trig,
@@ -29,26 +29,25 @@
                                         )
                                         loop:0,
                                         interpolation:1
-                                );
-		
-		snd = Warp1.ar(
+                                );*/
+
+/*		snd = Warp1.ar(
 			numChannels:2,
 			bufnum:bufnum,
-			pointer:LFSaw.ar(1/(BufDur.kr(bufnum)/timeStretch)).range(0,1), 
-			//pointer:Line.ar(dur:BufDur.kr(bufnum)/timeStretch),
+			pointer:LFSaw.ar(1/(BufDur.kr(bufnum)/timeStretch)).range(0,1),
+			//pointer:Line.ar(dur:BufFrames.kr(bufnum)/timeStretch),
 			freqScale:rate,
-			windowSize:0.3,
 			overlaps:8,
 			windowRandRatio:0.0,
-			interp:2
-		);
+			interp:1
+		);*/
 	// cross-fade between Warp1 and regular BufRd
 
-		// snd = PlayBuf.ar(2, bufnum,
-		// 	rate:BufRateScale.kr(bufnum)*rate,
-		// 	startPos: ((sampleStart*(rate>0))+(sampleEnd*(rate<0)))*BufFrames.kr(bufnum),
-		// 	trigger:t_trig,
-		// );
+	snd = PlayBuf.ar(2, bufnum,
+			rate:BufRateScale.kr(bufnum)*rate,
+		 	startPos: ((sampleStart*(rate>0))+(sampleEnd*(rate<0)))*BufFrames.kr(bufnum),
+		 	trigger:t_trig,
+		);
 	snd = snd * amp * ender;
 	Out.ar( [0,1],snd)
 }).add;
@@ -56,7 +55,7 @@
 )
 
 ~samplerPlayer = Array.fill(6,{arg i;Synth("player"++i,[\t_trig:0,\envgate:0], target:s);});
-~samplerPlayer[0].set(\t_trig,1,\envgate,1,\bufnum,~buff3,\rate,40.midicps/40.midicps,\amp,1,\timeStretch,1);
+~samplerPlayer[0].set(\t_trig,1,\envgate,1,\bufnum,~buff3,\rate,40.midicps/40.midicps,\amp,0.25,\timeStretch,1);
 ~samplerPlayer[0].set(\envgate,0);
 
 {BufDur.kr(~buff3)}.plot(1);

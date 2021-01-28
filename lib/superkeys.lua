@@ -1,6 +1,7 @@
 -- modulate for samples
 --
 
+MusicUtil = require "musicutil"
 
 local Superkeys={}
 
@@ -22,10 +23,10 @@ function Superkeys:add(sample)
     sample.velocity_range={0,127}
   end
 
-  -- TODO: load sample into a buffer
+  -- load sample into a buffer
   sample.buffer=self.buffer
+  engine.superkeysload(sample.buffer,sample)
   self.buffer=self.buffer+1
-
 end
 
 function Superkeys:on(d)
@@ -58,9 +59,8 @@ function Superkeys:on(d)
   engine.superkeyson(
     voice_i,
     sample_closest.buffer,
-    sample_closest.midi,
-    d.midi,
-    d.velocity,
+    MusicUtil.note_num_to_freq(d.midi)/MusicUtil.note_num_to_freq(sample_closest.midi),
+    d.velocity/127.0,
   )
 end
 
