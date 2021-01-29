@@ -6,5 +6,5 @@ this one allows you to add any number of samples for the same instrument - the c
 ## todo
 
 - [x] add timestretching? no
-- [ ] load sounds dynamically (first time they are used), load and then play sound soon after
-- [ ] if dynamic loading works, include ALL notes?
+- [x] load sounds dynamically (first time they are used), load and then play sound soon after
+- [x] if dynamic loading works, include ALL notes?
