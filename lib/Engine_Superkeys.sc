@@ -47,7 +47,7 @@ Engine_Superkeys : CroneEngine {
 				);
 		        snd = BRF.ar(snd,notch1,0.8);
 		        snd = BRF.ar(snd,notch2,0.8);
-		        snd = ((bitcrushBits < 32)*Decimator.ar(snd,bitcrushSampleRate,bitcrushBits))+((bitcrushBits>31)*snd);
+		        snd = Decimator.ar(snd,bitcrushSampleRate,bitcrushBits);
 		        snd = LPF.ar(snd,lpf);
 		        snd = HPF.ar(snd,hpf);
 				snd = Mix.ar([
