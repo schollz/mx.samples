@@ -7,7 +7,7 @@ local Formatters=require 'formatters'
 local Superkeys={}
 
 local delay_rates_names={"whole-note","half-note","quarter note","eighth note","sixteenth note","thirtysecond"}
-local delay_rates={8,4,2,1,1/2,1/4,1/8}
+local delay_rates={4,2,1,1/2,1/4,1/8,1/16}
 
 local function current_time()
   return clock.get_beat_sec()*clock.get_beats()

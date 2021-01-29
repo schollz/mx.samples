@@ -48,11 +48,6 @@ Engine_Superkeys : CroneEngine {
 		        snd = BRF.ar(snd,notch1,0.8);
 		        snd = BRF.ar(snd,notch2,0.8);
 		        snd = ((bitcrushBits < 32)*Decimator.ar(snd,bitcrushSampleRate,bitcrushBits))+((bitcrushBits>31)*snd);
-		        snd = snd*0.5 +
-		        	CombN.ar(
-		        		snd,
-						1,secondsPerBeat*delayBeats,secondsPerBeat*delayBeats*LinLin.kr(delayFeedback,0,1,2,128),0.5*delaySend // delayFeedback should vary between 2 and 128
-					); 
 		        snd = LPF.ar(snd,lpf);
 		        snd = HPF.ar(snd,hpf);
 				snd = Mix.ar([
@@ -60,6 +55,11 @@ Engine_Superkeys : CroneEngine {
 					Pan2.ar(snd[1],1+(2*pan),amp),
 				]);
 				snd = snd * amp * ender;
+		        snd = snd*0.5 +
+		        	CombN.ar(
+		        		snd,
+						1,secondsPerBeat*delayBeats,secondsPerBeat*delayBeats*LinLin.kr(delayFeedback,0,1,2,128),0.5*delaySend // delayFeedback should vary between 2 and 128
+					); 
 				Out.ar(0,snd)
 			}).add;	
 		});

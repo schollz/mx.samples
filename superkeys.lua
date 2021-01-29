@@ -17,9 +17,9 @@ function init()
   m.event = function(data) 
     tab.print(data) 
     if data[1]==144 then 
-      skeys:on({name="kawai_felt",midi=data[2],velocity=data[3]})
+      skeys:on({name="steinway_model_b",midi=data[2],velocity=data[3]})
     elseif data[1]==128 then 
-      skeys:off({name="kawai_felt",midi=data[2]})
+      skeys:off({name="steinway_model_b",midi=data[2]})
     end
   end
 
