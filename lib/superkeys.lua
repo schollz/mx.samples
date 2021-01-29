@@ -207,22 +207,22 @@ end
 function Superkeys:on(d)
   -- sk:on({name="piano",midi=40,velocity=60,release=True|False})
   -- {name="something", midi=40, velocity=10}
-  if d.release == nil then 
-	  d.release = false
+  if d.release==nil then
+    d.release=false
   end
   if d.velocity==nil then
     d.velocity=127
   end
 
   d.dynamic=1
-  if self.instrument[d.name][1].dynamics > 1 then 
-	-- determine dynamic based on velocity
-	d.dynamic = math.floor(util.linlin(0,127,1,self.instrument[d.name][1].dynamics+0.999,d.velocity))
+  if self.instrument[d.name][1].dynamics>1 then
+    -- determine dynamic based on velocity
+    d.dynamic=math.floor(util.linlin(0,127,1,self.instrument[d.name][1].dynamics+0.999,d.velocity))
   end
 
   -- transpose midi before finding sample
   d.midi=d.midi+params:get(d.name.."_tranpose_midi")
- 
+
   -- find the sample that is closest to the midi
   -- with the specified dynamic
   local sample_closest={buffer=-2,midi=-10000}
@@ -241,7 +241,7 @@ function Superkeys:on(d)
   end
   for _,i in ipairs(sample_is_shuffled) do
     local sample=self.instrument[d.name][i]
-    if d.dynamic == sample.dynamic then
+    if d.dynamic==sample.dynamic then
       if math.abs(sample.midi-d.midi)<math.abs(sample_closest.midi-d.midi) then
         sample_closest=sample
         sample_closest.i=i
@@ -260,7 +260,7 @@ function Superkeys:on(d)
     self.voice[voice_i].active={name=d.name,midi=d.midi}
 
     -- play it from the engine
-    
+
     -- compute pan (special for pianos!)
     local pan=params:get(d.name.."_pan")
     if d.name=="piano" then
@@ -268,17 +268,17 @@ function Superkeys:on(d)
       -- pop1=5000
       -- pop2=6900
     end
-    
+
     -- compute rate
     local rate=d.rate
     if rate==nil then
       rate=MusicUtil.note_num_to_freq(d.midi)/MusicUtil.note_num_to_freq(sample_closest_loaded.midi)*(MusicUtil.note_num_to_freq(d.midi+params:get(d.name.."_tranpose_sample"))/MusicUtil.note_num_to_freq(d.midi))
     end
-    
+
     -- compute amp
     -- TODO: multiply amp by velocity curve?
     local amp=params:get(instrument_name.."_amp")
-    
+
     engine.superkeyson(
       voice_i,
       sample_closest_loaded.buffer,
