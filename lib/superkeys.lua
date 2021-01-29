@@ -179,16 +179,16 @@ function Superkeys:new(args)
     name="delay feedback",
   controlspec=controlspec.new(0,100,'lin',0,0,'',1/100)}
   params:add_option("superkeys_delay_rate","delay rate",delay_rates_names)
-  params:add {
-    type='control',
-    id="superkeys_bitcrusher_sample",
-    name="bitcrush sample rate",
-  controlspec=controlspec.new(1000,48000,'exp',0,48000,'hz')}
-  params:add {
-    type='control',
-    id="superkeys_bitcrusher_bits",
-    name="bitcrush",
-  controlspec=controlspec.new(4,32,'lin',0,32,'bits',1/28)}
+  -- params:add {
+  --   type='control',
+  --   id="superkeys_bitcrusher_sample",
+  --   name="bitcrush sample rate",
+  -- controlspec=controlspec.new(1000,48000,'exp',0,48000,'hz')}
+  -- params:add {
+  --   type='control',
+  --   id="superkeys_bitcrusher_bits",
+  --   name="bitcrush",
+  -- controlspec=controlspec.new(4,32,'lin',0,32,'bits',1/28)}
   params:add {
     type='control',
     id="superkeys_play_release",
@@ -311,8 +311,6 @@ params:get"superkeys_lpf_superkeys"),
 params:get"superkeys_hpf_superkeys"),
 params:get"superkeys_notch1_superkeys"),
 params:get"superkeys_notch2_superkeys"),
-params:get"superkeys_bitcrusher_sample"),
-params:get"superkeys_bitcrusher_bits"),
 clock.get_beat_sec(),
 delay_rates[params:get"superkeys_delay_rate")],
 params:get"superkeys_delay_feedback")/100,

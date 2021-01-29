@@ -47,7 +47,7 @@ Engine_Superkeys : CroneEngine {
 				);
 		        snd = BRF.ar(snd,notch1,0.8);
 		        snd = BRF.ar(snd,notch2,0.8);
-		        snd = Decimator.ar(snd,bitcrushSampleRate,bitcrushBits);
+		        // snd = Decimator.ar(snd,bitcrushSampleRate,bitcrushBits);
 		        snd = LPF.ar(snd,lpf);
 		        snd = HPF.ar(snd,hpf);
 				snd = Mix.ar([
@@ -77,7 +77,7 @@ Engine_Superkeys : CroneEngine {
 			sampleBuffSuperkeys[msg[1]] = Buffer.read(context.server,msg[2]);
 		});
 
-		this.addCommand("superkeyson","iifffffffiiffff", { arg msg;
+		this.addCommand("superkeyson","iifffffffffff", { arg msg;
 			// lua is sending 1-index
 			samplerPlayerSuperkeys[msg[1]-1].set(
 				\t_trig,1,
@@ -90,12 +90,12 @@ Engine_Superkeys : CroneEngine {
 				\hpf,msg[7],
 				\notch1,msg[8],
 				\notch2,msg[9],
-				\bitcrushSampleRate,msg[10],
-				\bitcrushBits,msg[11],
-				\secondsPerBeat,msg[12],
-				\delayBeats,msg[13],
-				\delayFeedback,msg[14],
-				\delaySend,msg[15],
+				// \bitcrushSampleRate,msg[10],
+				// \bitcrushBits,msg[11],
+				\secondsPerBeat,msg[10],
+				\delayBeats,msg[11],
+				\delayFeedback,msg[12],
+				\delaySend,msg[13],
 			);
 		});
 
