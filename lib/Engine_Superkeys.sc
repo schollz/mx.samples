@@ -22,7 +22,7 @@ Engine_Superkeys : CroneEngine {
 		(0..13).do({arg i; 
 			SynthDef("player"++i,{ 
 				arg bufnum, amp, t_trig=0,envgate=1,
-				attack=0.005,decay=1,release=0.5,sustain=0.9,
+				attack=0.005,decay=1,release=2,sustain=0.9,
 				sampleStart=0,sampleEnd=1,rate=1,pan=0,
 				lpf=20000,resonance=1.0,hpf=10,notch1=20000,notch2=20000,
 				bitcrushSampleRate=48000,bitcrushBits=32,
@@ -45,16 +45,16 @@ Engine_Superkeys : CroneEngine {
 				 	startPos: ((sampleStart*(rate>0))+(sampleEnd*(rate<0)))*BufFrames.kr(bufnum),
 				 	trigger:t_trig,
 				);
-		        snd = LPF.ar(snd,lpf);
-		        snd = HPF.ar(snd,hpf);
-		        snd = (notch1<20000)*BRF.ar(snd,pop1,0.8)+(notch1==20000)*snd;
-		        snd = (notch2<20000)*BRF.ar(snd,pop1,0.8)+(notch2==20000)*snd;
-		        snd = (bitcrushSampleRate<48000 || bitcrushBits < 32)*Decimator.ar(snd,bitcrushSampleRate,bitcrushBits)+(bitcrushSampleRate==48000 && bitcrushBits==32)*snd;
-		        snd = snd +
+		        snd = BRF.ar(snd,notch1,0.8);
+		        snd = BRF.ar(snd,notch2,0.8);
+		        snd = ((bitcrushBits < 32)*Decimator.ar(snd,bitcrushSampleRate,bitcrushBits))+((bitcrushBits>31)*snd);
+		        snd = snd*0.5 +
 		        	CombN.ar(
 		        		snd,
-						1,secondsPerBeat/delayBeats*2,secondsPerBeat/delayBeats*LinLin.kr(delayFeedback,0,1,2,128),0.75*delaySend // delayFeedback should vary between 2 and 128
+						1,secondsPerBeat*delayBeats,secondsPerBeat*delayBeats*LinLin.kr(delayFeedback,0,1,2,128),0.5*delaySend // delayFeedback should vary between 2 and 128
 					); 
+		        snd = LPF.ar(snd,lpf);
+		        snd = HPF.ar(snd,hpf);
 				snd = Mix.ar([
 					Pan2.ar(snd[0],-1+(2*pan),amp),
 					Pan2.ar(snd[1],1+(2*pan),amp),

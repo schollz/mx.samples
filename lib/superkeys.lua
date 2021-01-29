@@ -6,20 +6,13 @@ local Formatters=require 'formatters'
 
 local Superkeys={}
 
-local delay_rates_names={"whole-note","half-note","quarter note","eighth note","sixteenth note"}
-local delay_rates={1,2,4,8,16}
+local delay_rates_names={"whole-note","half-note","quarter note","eighth note","sixteenth note","thirtysecond"}
+local delay_rates={8,4,2,1,1/2,1/4,1/8}
 
 local function current_time()
   return clock.get_beat_sec()*clock.get_beats()
 end
 
-
-local function list_files(d,recurisve)
-  if recursive==nil then
-    recursive=false
-  end
-  return _list_files(d,{},recursive)
-end
 
 local function _list_files(d,files,recursive)
   -- list files in a flat table
@@ -42,7 +35,7 @@ local function _list_files(d,files,recursive)
     end
   end
   do
-    local cmd="ls -p "..d.." | grep -v /"
+    local cmd="ls -p "..d
     local f=assert(io.popen(cmd,'r'))
     local out=assert(f:read('*a'))
     f:close()
@@ -51,6 +44,13 @@ local function _list_files(d,files,recursive)
     end
   end
   return files
+end
+
+local function list_files(d,recurisve)
+  if recursive==nil then
+    recursive=false
+  end
+  return _list_files(d,{},recursive)
 end
 
 local function split_str(inputstr,sep)
@@ -76,8 +76,11 @@ function Superkeys:new(args)
 
   -- lets add files
   local sample_folders=list_files(_path.code.."superkeys/samples/")
+  local num_instruments = 0
   for _,sample_folder_path in ipairs(sample_folders) do
-    _,sample_folder,_=string.match(fname,"(.-)([^\\/]-%.?([^%.\\/]*))$")
+    num_instruments = num_instruments + 1
+    _,sample_folder,_=string.match(sample_folder_path,"(.-)([^\\/]-%.?([^%.\\/]*))/$")
+    print("superkeys: sample_folder: '"..sample_folder.."'")
     files=list_files(sample_folder_path)
     for _,fname in ipairs(files) do
       if string.find(fname,".wav") then
@@ -99,9 +102,9 @@ function Superkeys:new(args)
   l:finish_adding()
 
   -- add parameters
-  params:add_group("SUPERKEYS",#self.instrument*12)
+  params:add_group("SUPERKEYS",num_instruments*14)
   local filter_freq=controlspec.new(20,20000,'exp',0,20000,'Hz')
-  for instrument_name,_ in pairs(self.instrument) do
+  for instrument_name,_ in pairs(l.instrument) do
     params:add_separator(instrument_name)
     params:add {
       type='control',
@@ -134,7 +137,7 @@ function Superkeys:new(args)
       type='control',
       id=instrument_name..'_hpf_superkeys',
       name='high-pass filter',
-      controlspec=filter_freq,
+      controlspec=controlspec.new(20,20000,'exp',0,20,'Hz'),
       formatter=Formatters.format_freq
     }
     params:add {
@@ -154,24 +157,28 @@ function Superkeys:new(args)
     params:add {
       type='control',
       id=instrument_name.."_delay_send",
-      name="delay send"
-    controlspec=controlspec.new(0,100,'lin',0,0,'%',1/100)}
+      name="delay send",
+    controlspec=controlspec.new(0,100,'lin',0,0,'%',1/100)
+  }
     params:add {
       type='control',
       id=instrument_name.."_delay_feedback",
-      name="delay feedback"
-    controlspec=controlspec.new(0,100,'lin',0,0,'%',1/100)}
+      name="delay feedback",
+    controlspec=controlspec.new(0,100,'lin',0,0,'%',1/100)
+  }
     params:add_option(instrument_name.."_delay_rate","delay rate",delay_rates_names)
     params:add {
       type='control',
       id=instrument_name.."_bitcrusher_sample",
-      name="bitcrush sample rate"
-    controlspec=controlspec.new(1000,48000,'exp',0,48000,'hz')}
+      name="bitcrush sample rate",
+    controlspec=controlspec.new(1000,48000,'exp',0,48000,'hz')
+  }
     params:add {
       type='control',
       id=instrument_name.."_bitcrusher_bits",
-      name="bitcrush"
-    controlspec=controlspec.new(4,32,'lin',0,32,'bits',1/28)}
+      name="bitcrush",
+    controlspec=controlspec.new(4,32,'lin',0,32,'bits',1/28)
+  }
   end
 
 
@@ -205,8 +212,9 @@ function Superkeys:finish_adding()
 end
 
 function Superkeys:on(d)
-  -- sk:on({name="piano",midi=40,velocity=60,release=True|False})
-  -- {name="something", midi=40, velocity=10}
+  -- {name="piano",midi=40,velocity=60,release=True|False}
+  tab.print(d)
+
   if d.release==nil then
     d.release=false
   end
@@ -241,7 +249,7 @@ function Superkeys:on(d)
   end
   for _,i in ipairs(sample_is_shuffled) do
     local sample=self.instrument[d.name][i]
-    if d.dynamic==sample.dynamic then
+    if (d.dynamic==sample.dynamic and d.release==sample.release) or (d.release==true and sample.release==true) then
       if math.abs(sample.midi-d.midi)<math.abs(sample_closest.midi-d.midi) then
         sample_closest=sample
         sample_closest.i=i
@@ -253,11 +261,21 @@ function Superkeys:on(d)
     end
   end
 
+  if d.release then 
+    print("sample_closest_loaded")
+    tab.print(sample_closest_loaded)
+    print("sample_closest")
+    tab.print(sample_closest)
+  end
 
+
+  local voice_i = -1
   if sample_closest_loaded.buffer>-1 then
+    print("sample_closest_loaded:")
+    tab.print(sample_closest_loaded)
     -- assign the new voice
-    local voice_i=self:get_voice()
-    self.voice[voice_i].active={name=d.name,midi=d.midi}
+    voice_i=self:get_voice()
+    self.voice[voice_i].active={name=d.name,midi=d.midi,i=sample_closest_loaded.i}
 
     -- play it from the engine
 
@@ -277,7 +295,7 @@ function Superkeys:on(d)
 
     -- compute amp
     -- TODO: multiply amp by velocity curve?
-    local amp=params:get(instrument_name.."_amp")
+    local amp=params:get(d.name.."_amp")
 
     engine.superkeyson(
       voice_i,
@@ -293,8 +311,8 @@ function Superkeys:on(d)
       params:get(d.name.."_bitcrusher_bits"),
       clock.get_beat_sec(),
       delay_rates[params:get(d.name.."_delay_rate")],
-      params:get(d.name.."_delay_feedback"),
-      params:get(d.name.."_delay_send"),
+      params:get(d.name.."_delay_feedback")/100,
+      params:get(d.name.."_delay_send")/100
     )
   end
 
@@ -305,10 +323,14 @@ function Superkeys:on(d)
     self.buffer=self.buffer+1
   end
 
+  return voice_i
 end
 
 function Superkeys:off(d)
-  -- {name="something", midi=40}
+  -- {name="something", midi=40, release=True|False}
+  if d.release == nil then 
+    d.release = false
+  end
 
   -- find the voice being used for this one
   for i,voice in ipairs(self.voice) do
@@ -318,15 +340,19 @@ function Superkeys:off(d)
       self.voice[i].active={name="",midi=0}
       engine.superkeysoff(i)
 
-      -- -- TODO: add a release sound effect
-      -- TODO make the release less random
-      if self.instrument[d.name][1].has_release and math.random()<1 then
-        self:on{name=d.name,release=true,midi=d.midi}
-        clock.run(function()
-          self:off{name=d.name,midi=d.midi}
-        end)
-      end
-      break
+      -- -- add a release sound effect if its not a release
+      -- if d.release==false then
+      --   if self.instrument[d.name][1].has_release then
+      --     print("doing release!")
+      --     local voice_i = self:on{name=d.name,release=true,midi=d.midi,variation=d.variation}
+      --     clock.run(function()
+      --       clock.sleep(1)
+      --       self.voice[voice_i].active={name="",midi=0}
+      --       engine.superkeysoff(voice_i)
+      --     end)
+      --   end
+      -- end
+      do return end
     end
   end
 end
