@@ -68,6 +68,9 @@ Engine_Superkeys : CroneEngine {
 			Synth("player"++i, target:context.xg);
 		});
 
+		this.addCommand("superkeysrelease","", { arg msg;
+			(0..199).do({arg i; sampleBuffSuperkeys[i].free});
+		});
 		this.addCommand("superkeysload","is", { arg msg;
 			// lua is sending 0-index
 			sampleBuffSuperkeys[msg[1]].free;
@@ -106,7 +109,7 @@ Engine_Superkeys : CroneEngine {
 	}
 
 	free {
-		(0..99).do({arg i; sampleBuffSuperkeys[i].free});
+		(0..199).do({arg i; sampleBuffSuperkeys[i].free});
 		(0..13	).do({arg i; samplerPlayerSuperkeys[i].free});
 	}
 }
