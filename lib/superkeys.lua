@@ -181,10 +181,6 @@ end
 
 function Superkeys:add(sample)
   -- {name="something", filename="~/piano_mf_c4.wav", midi=40, dynamic=1|2|3, dynamics=3, release=False/True, has_release=TBD, buffer=TBD}
-  if sample.velocity_range==nil then
-    sample.velocity_range={0,127}
-  end
-
   -- add sample to instrument
   sample.buffer=-1
   if self.instrument[sample.name]==nil then
@@ -209,14 +205,26 @@ function Superkeys:finish_adding()
 end
 
 function Superkeys:on(d)
-  -- sk:on({name="piano",midi=40,velocity=60,rate=overrides_midi})
+  -- sk:on({name="piano",midi=40,velocity=60,release=True|False})
   -- {name="something", midi=40, velocity=10}
-  d.midi=d.midi+params:get(d.name.."_tranpose_midi")
+  if d.release == nil then 
+	  d.release = false
+  end
   if d.velocity==nil then
     d.velocity=127
   end
+
+  d.dynamic=1
+  if self.instrument[d.name][1].dynamics > 1 then 
+	-- determine dynamic based on velocity
+	d.dynamic = math.floor(util.linlin(0,127,1,self.instrument[d.name][1].dynamics+0.999,d.velocity))
+  end
+
+  -- transpose midi before finding sample
+  d.midi=d.midi+params:get(d.name.."_tranpose_midi")
+ 
   -- find the sample that is closest to the midi
-  -- and within the velocity range
+  -- with the specified dynamic
   local sample_closest={buffer=-2,midi=-10000}
   local sample_closest_loaded={buffer=-2,midi=-10000}
 
@@ -233,7 +241,7 @@ function Superkeys:on(d)
   end
   for _,i in ipairs(sample_is_shuffled) do
     local sample=self.instrument[d.name][i]
-    if d.velocity>=sample.velocity_range[1] and d.velocity<=sample.velocity_range[2] then
+    if d.dynamic == sample.dynamic then
       if math.abs(sample.midi-d.midi)<math.abs(sample_closest.midi-d.midi) then
         sample_closest=sample
         sample_closest.i=i
@@ -252,19 +260,25 @@ function Superkeys:on(d)
     self.voice[voice_i].active={name=d.name,midi=d.midi}
 
     -- play it from the engine
-    print("superkeys: on "..d.name..d.midi)
+    
+    -- compute pan (special for pianos!)
     local pan=params:get(d.name.."_pan")
     if d.name=="piano" then
       pan=util.linlin(21,108,-0.85,0.85,d.midi)
       -- pop1=5000
       -- pop2=6900
     end
+    
+    -- compute rate
     local rate=d.rate
     if rate==nil then
       rate=MusicUtil.note_num_to_freq(d.midi)/MusicUtil.note_num_to_freq(sample_closest_loaded.midi)*(MusicUtil.note_num_to_freq(d.midi+params:get(d.name.."_tranpose_sample"))/MusicUtil.note_num_to_freq(d.midi))
     end
-    local amp=params:get(instrument_name.."_amp")
+    
+    -- compute amp
     -- TODO: multiply amp by velocity curve?
+    local amp=params:get(instrument_name.."_amp")
+    
     engine.superkeyson(
       voice_i,
       sample_closest_loaded.buffer,
@@ -306,10 +320,10 @@ function Superkeys:off(d)
 
       -- -- TODO: add a release sound effect
       -- TODO make the release less random
-      if self.instrument[d.name.." release"]~=nil and math.random()<1 then
-        self:on{name=d.name.." release",rate=1,midi=d.midi}
+      if self.instrument[d.name][1].has_release and math.random()<1 then
+        self:on{name=d.name,release=true,midi=d.midi}
         clock.run(function()
-          self:off{name=d.name.." release",midi=d.midi}
+          self:off{name=d.name,midi=d.midi}
         end)
       end
       break
