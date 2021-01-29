@@ -96,6 +96,7 @@ function Superkeys:new(args)
       end
     end
   end
+  l:finish_adding()
 
   -- add parameters
   params:add_group("SUPERKEYS",#self.instrument*12)
@@ -179,7 +180,7 @@ end
 
 
 function Superkeys:add(sample)
-  -- {name="something", filename="~/piano_mf_c4.wav", midi=40, velocity_range={0,127},buffer=TBD}
+  -- {name="something", filename="~/piano_mf_c4.wav", midi=40, dynamic=1|2|3, dynamics=3, release=False/True, has_release=TBD, buffer=TBD}
   if sample.velocity_range==nil then
     sample.velocity_range={0,127}
   end
@@ -190,6 +191,21 @@ function Superkeys:add(sample)
     self.instrument[sample.name]={}
   end
   table.insert(self.instrument[sample.name],sample)
+end
+
+function Superkeys:finish_adding()
+  for sample_name,samples in pairs(self.instrument) do
+    local has_release=false
+    for i,sample in ipairs(samples) do
+      if sample.release then
+        has_release=true
+        break
+      end
+    end
+    for i,sample in ipairs(samples) do
+      self.instrument[sample_name][i].has_release=has_release
+    end
+  end
 end
 
 function Superkeys:on(d)
