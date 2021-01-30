@@ -44,7 +44,7 @@ for _, fname in enumerate(fnames):
     foo = f.split(".")[0].split()
     dynamics = 2
     dynamic = 1
-    if foo[3] == "f":
+    if foo[2] == "f":
         dynamic = 2
     release = 0
     variation=1
