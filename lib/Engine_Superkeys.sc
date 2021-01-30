@@ -19,7 +19,7 @@ Engine_Superkeys : CroneEngine {
 			Buffer.new(context.server);
 		});
 
-		(0..13).do({arg i; 
+		(0..15).do({arg i; 
 			SynthDef("player"++i,{ 
 				arg bufnum, amp, t_trig=0,envgate=1,
 				attack=0.005,decay=1,release=2,sustain=0.9,
@@ -110,6 +110,6 @@ Engine_Superkeys : CroneEngine {
 
 	free {
 		(0..199).do({arg i; sampleBuffSuperkeys[i].free});
-		(0..13	).do({arg i; samplerPlayerSuperkeys[i].free});
+		(0..15).do({arg i; samplerPlayerSuperkeys[i].free});
 	}
 }

@@ -69,8 +69,9 @@ function Superkeys:new(args)
   local args=args==nil and {} or args
   l.instrument={} -- map instrument name to list of samples
   l.buffer=0
+  l.voice_num=0 -- TODO: keep track of voices and buffer numbers
   l.voice={} -- list of voices and how hold they are
-  for i=1,12 do
+  for i=1,14 do
     l.voice[i]={age=current_time(),active={name="",midi=0}}
   end
 
@@ -267,53 +268,52 @@ end
 
 local voice_i=-1
 if sample_closest_loaded.buffer>-1 then
-  print("sample_closest_loaded:")
-  tab.print(sample_closest_loaded)
   -- assign the new voice
   voice_i=self:get_voice()
   self.voice[voice_i].active={name=d.name,midi=d.midi,i=sample_closest_loaded.i}
+  print("sample_closest_loaded: "..sample_closest_loaded.filename.." on voice "..voice_i)
 
   -- play it from the engine
 
   -- compute pan (special for pianos!)
-local pan=params:get("superkeys_pan")
-if d.name=="piano" then
-  pan=util.linlin(21,108,-0.85,0.85,d.midi)
-  -- pop1=5000
-  -- pop2=6900
-end
+  local pan=params:get("superkeys_pan")
+  if string.find(d.name,"piano") then
+    pan=util.linlin(21,108,-0.85,0.85,d.midi)
+  end
 
--- compute rate
-local rate=d.rate
-if d.release and rate==nil then
-  rate=1
-elseif rate==nil then
-rate=MusicUtil.note_num_to_freq(d.midi)/MusicUtil.note_num_to_freq(sample_closest_loaded.midi)*(MusicUtil.note_num_to_freq(d.midi+params:get("superkeys_tranpose_sample"))/MusicUtil.note_num_to_freq(d.midi))
-end
+  -- compute rate
+  local rate=d.rate
+  if d.release and rate==nil then
+    rate=1
+  elseif rate==nil then
+    rate=MusicUtil.note_num_to_freq(d.midi)/MusicUtil.note_num_to_freq(sample_closest_loaded.midi)*(MusicUtil.note_num_to_freq(d.midi+params:get("superkeys_tranpose_sample"))/MusicUtil.note_num_to_freq(d.midi))
+  end
 
--- compute amp
--- TODO: multiply amp by velocity curve?
-local amp=params:get("superkeys_amp")
+  -- compute amp
+  -- TODO: multiply amp by velocity curve?
+  local amp=params:get("superkeys_amp")
 
-engine.superkeyson(
-  voice_i,
-  sample_closest_loaded.buffer,
-  rate,
-  amp,
-  pan,
-params:get("superkeys_lpf_superkeys"),
-params:get("superkeys_hpf_superkeys"),
-params:get("superkeys_notch1_superkeys"),
-params:get("superkeys_notch2_superkeys"),
-clock.get_beat_sec(),
-delay_rates[params:get("superkeys_delay_rate")],
-params:get("superkeys_delay_times")/100,
-params:get("superkeys_delay_send")/100
+  engine.superkeyson(
+    voice_i,
+    sample_closest_loaded.buffer,
+    rate,
+    amp,
+    pan,
+  params:get("superkeys_lpf_superkeys"),
+  params:get("superkeys_hpf_superkeys"),
+  params:get("superkeys_notch1_superkeys"),
+  params:get("superkeys_notch2_superkeys"),
+  clock.get_beat_sec(),
+  delay_rates[params:get("superkeys_delay_rate")],
+  params:get("superkeys_delay_times")/100,
+  params:get("superkeys_delay_send")/100
 )
 end
 
 -- load sample if not loaded
 if sample_closest.buffer==-1 then
+  print("loading:")
+  tab.print(sample_closest)
   self.instrument[d.name][sample_closest.i].buffer=self.buffer
   engine.superkeysload(self.buffer,sample_closest.filename)
   self.buffer=self.buffer+1
