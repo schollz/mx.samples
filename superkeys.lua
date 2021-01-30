@@ -15,8 +15,8 @@ function init()
   skeys=superkeys:new()
   instrument_names=skeys:list_instruments()
 
-  for _,dev in midi.devices do
-    if dev.port>0 then
+  for _,dev in pairs(midi.devices) do
+    if dev.port~=nil then
       m=midi.connect(dev.port)
       m.event=function(data)
         tab.print(data)

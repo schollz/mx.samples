@@ -79,13 +79,12 @@ function Superkeys:new(args)
   local num_instruments=0
   l.instrument_names={}
   for _,sample_folder_path in ipairs(sample_folders) do
-    num_instruments=num_instruments+1
     _,sample_folder,_=string.match(sample_folder_path,"(.-)([^\\/]-%.?([^%.\\/]*))/$")
-    table.insert(l.instrument_names,sample_folder)
-    print("superkeys: sample_folder: '"..sample_folder.."'")
     files=list_files(sample_folder_path)
+    local found_wav = false
     for _,fname in ipairs(files) do
       if string.find(fname,".wav") then
+found_wav = true
         -- WORK
         pathname,filename,ext=string.match(fname,"(.-)([^\\/]-%.?([^%.\\/]*))$")
         -- midival,dynamic,dynamics,variation,release
@@ -99,6 +98,10 @@ function Superkeys:new(args)
           variation=tonumber(foo[4]),
         release=foo[5]=="1"})
       end
+    end
+    if found_wav then 
+    num_instruments=num_instruments+1
+    table.insert(l.instrument_names,sample_folder)
     end
   end
   table.sort(l.instrument_names)
@@ -118,7 +121,7 @@ function Superkeys:new(args)
   end
 
   -- add parameters
-  params:add_group("SUPERKEYS",13)
+  params:add_group("SUPERKEYS",12)
   local filter_freq=controlspec.new(20,20000,'exp',0,20000,'Hz')
   params:add {
     type='control',
@@ -215,8 +218,6 @@ end
 
 function Superkeys:on(d)
   -- {name="piano",midi=40,velocity=60,release=True|False}
-  tab.print(d)
-
   if d.release==nil then
     d.release=false
   end
@@ -231,7 +232,7 @@ function Superkeys:on(d)
   end
 
   -- transpose midi before finding sample
-d.midi=d.midi+params:get"superkeys_tranpose_midi")
+d.midi=d.midi+params:get("superkeys_tranpose_midi")
 
 -- find the sample that is closest to the midi
 -- with the specified dynamic
@@ -263,13 +264,6 @@ for _,i in ipairs(sample_is_shuffled) do
   end
 end
 
--- if d.release then
---   print("sample_closest_loaded")
---   tab.print(sample_closest_loaded)
---   print("sample_closest")
---   tab.print(sample_closest)
--- end
-
 
 local voice_i=-1
 if sample_closest_loaded.buffer>-1 then
@@ -282,7 +276,7 @@ if sample_closest_loaded.buffer>-1 then
   -- play it from the engine
 
   -- compute pan (special for pianos!)
-local pan=params:get"superkeys_pan")
+local pan=params:get("superkeys_pan")
 if d.name=="piano" then
   pan=util.linlin(21,108,-0.85,0.85,d.midi)
   -- pop1=5000
@@ -294,12 +288,12 @@ local rate=d.rate
 if d.release and rate==nil then
   rate=1
 elseif rate==nil then
-rate=MusicUtil.note_num_to_freq(d.midi)/MusicUtil.note_num_to_freq(sample_closest_loaded.midi)*(MusicUtil.note_num_to_freq(d.midi+params:get"superkeys_tranpose_sample"))/MusicUtil.note_num_to_freq(d.midi))
+rate=MusicUtil.note_num_to_freq(d.midi)/MusicUtil.note_num_to_freq(sample_closest_loaded.midi)*(MusicUtil.note_num_to_freq(d.midi+params:get("superkeys_tranpose_sample"))/MusicUtil.note_num_to_freq(d.midi))
 end
 
 -- compute amp
 -- TODO: multiply amp by velocity curve?
-local amp=params:get"superkeys_amp")
+local amp=params:get("superkeys_amp")
 
 engine.superkeyson(
   voice_i,
@@ -307,14 +301,14 @@ engine.superkeyson(
   rate,
   amp,
   pan,
-params:get"superkeys_lpf_superkeys"),
-params:get"superkeys_hpf_superkeys"),
-params:get"superkeys_notch1_superkeys"),
-params:get"superkeys_notch2_superkeys"),
+params:get("superkeys_lpf_superkeys"),
+params:get("superkeys_hpf_superkeys"),
+params:get("superkeys_notch1_superkeys"),
+params:get("superkeys_notch2_superkeys"),
 clock.get_beat_sec(),
-delay_rates[params:get"superkeys_delay_rate")],
-params:get"superkeys_delay_feedback")/100,
-params:get"superkeys_delay_send")/100
+delay_rates[params:get("superkeys_delay_rate")],
+params:get("superkeys_delay_times")/100,
+params:get("superkeys_delay_send")/100
 )
 end
 
