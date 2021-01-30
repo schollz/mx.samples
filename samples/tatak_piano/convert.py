@@ -53,7 +53,7 @@ for _, fname in enumerate(fnames):
         release = 1
     midival = str2midi(foo[4])
     newname = "{}.{}.{}.{}.{}.wav".format(midival,dynamic,dynamics,variation,release)
-    cmd = 'ffmpeg -i "{}" -af "silenceremove=1:0:-60dB" -y -to 00:00:06 {}'.format(fname,newname)
+    cmd = 'ffmpeg -i "{}" -af "silenceremove=1:0:-50dB" -y -to 00:00:06 {}'.format(fname,newname)
     # cmd = 'ffmpeg -i "{}" -af "silenceremove=start_periods=1:start_duration=1:start_threshold=-63dB:detection=peak,aformat=dblp,areverse,silenceremove=start_periods=1:start_duration=1:start_threshold=-63dB:detection=peak,aformat=dblp,areverse" -y {}'.format(fname,newname)
     os.system(cmd)
     #normalize_volume(newname)
