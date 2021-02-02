@@ -124,7 +124,8 @@ def depop(filename,newfilename,channel=0):
     data0 = excise(data[:,0],r[0][0],r[0][-1])
     if num_channels > 1:
         data1 = excise(data[:,1],r[0][0],r[0][-1])
-        newdata = np.column_stack((data0,data1))*data_max
+        newlen = min([len(data0),len(data1)])
+        newdata = np.column_stack((data0[:newlen],data1[:newlen]))*data_max
     else:
         newdata = data0 
 
@@ -142,3 +143,6 @@ def depop_file(filename,newfilename=""):
                 break
     shutil.copy(newfilename,filename)
 
+
+
+# depop_file("../../67.3.3.1.0.wav","test1.wav")
