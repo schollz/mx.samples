@@ -6,7 +6,7 @@ from scipy import signal
 from scipy.io import wavfile
 import numpy as np 
 
-debug_depop = True
+debug_depop = False
 if debug_depop:
     import matplotlib.pyplot as plt
 
@@ -150,10 +150,10 @@ def depop_file(filename,newfilename=""):
             result = depop(newfilename,newfilename,channel)
             if result == "":
                 break
-            print(result + " in file " + filename)
+            print(result + " in file " + filename + ", channel {}".format(channel+1))
     if newfilename == "foo.wav":
         shutil.copy(newfilename,filename)
 
 
-
-# depop_file("54.1.2.1.0.wav","test1.wav")
+# if debug_depop:
+#   depop_file("54.1.2.1.0.wav","test1.wav")
