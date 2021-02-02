@@ -6,9 +6,9 @@ from scipy import signal
 from scipy.io import wavfile
 import numpy as np 
 
-# debug_depop = False
-# if debug_depop:
-#     import matplotlib.pyplot as plt
+debug_depop = True
+if debug_depop:
+    import matplotlib.pyplot as plt
 
 # (adapted from ezra's excise.m, all mistakes are from zack)
 # %% excise a portion of given (audio) signal with crossfade
@@ -107,9 +107,10 @@ def depop(filename,newfilename,channel=0):
     z_std = np.std(zmean[-500:])
     ind = np.argmax(zmean)
     score = zmean[ind]/z_std
-    # plt.plot(t,zmean)
-    # plt.title(score)
-    # plt.show()
+    if debug_depop:
+        plt.plot(t,zmean)
+        plt.title(score)
+        plt.show()
 
     # anything over 20 sd's is probably a pop
     if score < 20:
@@ -144,4 +145,4 @@ def depop_file(filename,newfilename=""):
 
 
 
-# depop_file("../../67.3.3.1.0.wav","test1.wav")
+depop_file("../../57.3.3.1.0.wav","test1.wav")
