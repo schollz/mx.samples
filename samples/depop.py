@@ -124,7 +124,8 @@ def depop(filename,newfilename,channel=0):
 
         # anything over 20 sd's is probably a pop
         if score < 20:
-            print("too low score")
+            if debug_depop:
+                print("too low score: {}".format(score))
             continue
 
 
