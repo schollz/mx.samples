@@ -129,6 +129,7 @@ def depop(filename,newfilename,channel=0):
         newdata = data0 
 
     wavfile.write(newfilename,samplerate,newdata.astype(original_type))
+    print("removed a pop at {}".format(t[ind]))
     return True
 
 def depop_file(filename,newfilename=""):

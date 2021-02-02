@@ -22,11 +22,13 @@ for _, fname in enumerate(tqdm(fnames)):
         seconds=8
     elif ".pp." in fname:
         seconds=4
-    cmd = 'ffmpeg -i "{}" -af "silenceremove=1:0:-60dB" -y -to 00:00:0{} {}'.format(fname,seconds,newname)
+    cmd = ['ffmpeg','-i',fname,'-af','silenceremove=1:0:-60dB','-y','-to','00:00:0{}'.format(seconds),newname]
     run(cmd)
     try:
         depop_file(newname)
-    except:
-        pass
+    except Exception as e:
+        print(e)
+        print(newname)
+        sys.exit(1)
 
 
