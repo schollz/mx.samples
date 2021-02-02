@@ -123,7 +123,7 @@ def depop(filename,newfilename,channel=0):
 
 
         # anything over 20 sd's is probably a pop
-        if score < 20:
+        if score < 5:
             if debug_depop:
                 print("too low score: {}".format(score))
             continue
@@ -151,8 +151,9 @@ def depop_file(filename,newfilename=""):
             if result == "":
                 break
             print(result + " in file " + filename)
-    shutil.copy(newfilename,filename)
+    if newfilename == "foo.wav":
+        shutil.copy(newfilename,filename)
 
 
 
-depop_file("../../57.3.3.1.0.wav","test1.wav")
+depop_file("57.3.3.1.0.wav","test1.wav")
