@@ -105,33 +105,40 @@ def depop(filename,newfilename,channel=0):
     zmean = zmean / znum 
     zmean = zmean - np.mean(zmean[-500:])
     z_std = np.std(zmean[-500:])
-    ind = np.argmax(zmean)
-    score = zmean[ind]/z_std
+
+    peaks, _ = signal.find_peaks(zmean,height=z_std*6,prominence=10)
+
     if debug_depop:
         plt.plot(t,zmean)
-        plt.title(score)
+        plt.plot(t[peaks],zmean[peaks],'o')
+        plt.title("ch {}".format(channel))
         plt.show()
 
-    # anything over 20 sd's is probably a pop
-    if score < 20:
-        return ""
+    for _, ind in enumerate(peaks):
+        if t[ind] < 0.05 or t[ind] > length-0.05:
+            continue
+        # assume a pop width of 6 ms
+        r = np.where(np.logical_and(time>t[ind]-0.003,time<t[ind]+0.003))
+        score = zmean[ind]/z_std
 
-    # assume a pop width of 6 ms
-    r = np.where(np.logical_and(time>t[ind]-0.003,time<t[ind]+0.003))
 
-    if r[0][0] == 0:
-        return ""
+        # anything over 20 sd's is probably a pop
+        if score < 20:
+            print("too low score")
+            continue
 
-    data0 = excise(data[:,0],r[0][0],r[0][-1])
-    if num_channels > 1:
-        data1 = excise(data[:,1],r[0][0],r[0][-1])
-        newlen = min([len(data0),len(data1)])
-        newdata = np.column_stack((data0[:newlen],data1[:newlen]))*data_max
-    else:
-        newdata = data0 
 
-    wavfile.write(newfilename,samplerate,newdata.astype(original_type))
-    return "removed a pop at {}".format(t[ind])
+        data0 = excise(data[:,0],r[0][0],r[0][-1])
+        if num_channels > 1:
+            data1 = excise(data[:,1],r[0][0],r[0][-1])
+            newlen = min([len(data0),len(data1)])
+            newdata = np.column_stack((data0[:newlen],data1[:newlen]))*data_max
+        else:
+            newdata = data0 
+
+        wavfile.write(newfilename,samplerate,newdata.astype(original_type))
+        return "removed a pop at {}".format(t[ind])
+    return ""
 
 def depop_file(filename,newfilename=""):
     if newfilename=="":
