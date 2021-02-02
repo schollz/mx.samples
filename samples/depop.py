@@ -113,13 +113,13 @@ def depop(filename,newfilename,channel=0):
 
     # anything over 20 sd's is probably a pop
     if score < 20:
-        return False
+        return ""
 
     # assume a pop width of 6 ms
     r = np.where(np.logical_and(time>t[ind]-0.003,time<t[ind]+0.003))
 
     if r[0][0] == 0:
-        return False
+        return ""
 
     data0 = excise(data[:,0],r[0][0],r[0][-1])
     if num_channels > 1:
@@ -130,8 +130,7 @@ def depop(filename,newfilename,channel=0):
         newdata = data0 
 
     wavfile.write(newfilename,samplerate,newdata.astype(original_type))
-    print("removed a pop at {}".format(t[ind]))
-    return True
+    return "removed a pop at {}".format(t[ind])
 
 def depop_file(filename,newfilename=""):
     if newfilename=="":
@@ -139,8 +138,10 @@ def depop_file(filename,newfilename=""):
     shutil.copy(filename,newfilename)
     for channel in range(0,2):
         for i in range(10):
-            if not depop(newfilename,newfilename,channel):
+            result = depop(newfilename,newfilename,channel)
+            if result == "":
                 break
+            print(result + " in file " + filename)
     shutil.copy(newfilename,filename)
 
 
