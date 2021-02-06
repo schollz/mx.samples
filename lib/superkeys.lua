@@ -188,19 +188,9 @@ found_wav = true
   params:add {
     type='control',
     id="superkeys_delay_times",
-    name="delay feedback",
-  controlspec=controlspec.new(0,100,'lin',0,0,'',1/100)}
+    name="delay iterations",
+  controlspec=controlspec.new(0,100,'lin',0,0,'beats',1/100)}
   params:add_option("superkeys_delay_rate","delay rate",delay_rates_names)
-  -- params:add {
-  --   type='control',
-  --   id="superkeys_bitcrusher_sample",
-  --   name="bitcrush sample rate",
-  -- controlspec=controlspec.new(1000,48000,'exp',0,48000,'hz')}
-  -- params:add {
-  --   type='control',
-  --   id="superkeys_bitcrusher_bits",
-  --   name="bitcrush",
-  -- controlspec=controlspec.new(4,32,'lin',0,32,'bits',1/28)}
   params:add {
     type='control',
     id="superkeys_play_release",
@@ -227,6 +217,10 @@ end
 
 function Superkeys:on(d)
   -- {name="piano",midi=40,velocity=60,is_release=True|False}
+
+  -- use spaes or undersores
+  d.name = d.name:gsub(" ","_")
+
   if d.is_release==nil then
     d.is_release=false
   end
@@ -350,6 +344,10 @@ end
 
 function Superkeys:off(d)
   -- {name="something", midi=40, is_release=True|False}
+
+  -- use spaes or undersores
+  d.name = d.name:gsub(" ","_")
+
   if d.is_release==nil then
     d.is_release=false
   end
