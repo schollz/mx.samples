@@ -6,7 +6,7 @@ local Formatters=require 'formatters'
 
 local Superkeys={}
 
-local VOICE_NUM = 14
+local VOICE_NUM=14
 
 local delay_rates_names={"whole-note","half-note","quarter note","eighth note","sixteenth note","thirtysecond"}
 local delay_rates={4,2,1,1/2,1/4,1/8,1/16}
@@ -84,10 +84,10 @@ function Superkeys:new(args)
   for _,sample_folder_path in ipairs(sample_folders) do
     _,sample_folder,_=string.match(sample_folder_path,"(.-)([^\\/]-%.?([^%.\\/]*))/$")
     files=list_files(sample_folder_path)
-    local found_wav = false
+    local found_wav=false
     for _,fname in ipairs(files) do
       if string.find(fname,".wav") then
-found_wav = true
+        found_wav=true
         -- WORK
         pathname,filename,ext=string.match(fname,"(.-)([^\\/]-%.?([^%.\\/]*))$")
         -- midival,dynamic,dynamics,variation,release
@@ -102,9 +102,9 @@ found_wav = true
         is_release=foo[5]=="1"})
       end
     end
-    if found_wav then 
-    num_instruments=num_instruments+1
-    table.insert(l.instrument_names,sample_folder)
+    if found_wav then
+      num_instruments=num_instruments+1
+      table.insert(l.instrument_names,sample_folder)
     end
   end
   table.sort(l.instrument_names)
@@ -219,7 +219,7 @@ function Superkeys:on(d)
   -- {name="piano",midi=40,velocity=60,is_release=True|False}
 
   -- use spaes or undersores
-  d.name = d.name:gsub(" ","_")
+  d.name=d.name:gsub(" ","_")
 
   if d.is_release==nil then
     d.is_release=false
@@ -235,118 +235,102 @@ function Superkeys:on(d)
   end
 
   -- transpose midi before finding sample
-d.midi=d.midi+params:get("superkeys_tranpose_midi")
+  d.midi=d.midi+params:get("superkeys_tranpose_midi")
 
--- find the sample that is closest to the midi
--- with the specified dynamic
-local sample_closest={buffer=-2,midi=-10000}
-local sample_closest_loaded={buffer=-2,midi=-10000}
+  -- find the sample that is closest to the midi
+  -- with the specified dynamic
+  local sample_closest={buffer=-2,midi=-10000}
+  local sample_closest_loaded={buffer=-2,midi=-10000}
 
--- go through the samples randomly
-local sample_is={}
-for i,sample in ipairs(self.instrument[d.name]) do
-  table.insert(sample_is,i)
-end
--- shuffle
-local sample_is_shuffled={}
-for i,v in ipairs(sample_is) do
-  local pos=math.random(1,#sample_is_shuffled+1)
-  table.insert(sample_is_shuffled,pos,v)
-end
-for _,i in ipairs(sample_is_shuffled) do
-  local sample=self.instrument[d.name][i]
-  if (d.dynamic==sample.dynamic and d.is_release==sample.is_release) or (d.is_release==true and sample.is_release==true) then
-    if math.abs(sample.midi-d.midi)<math.abs(sample_closest.midi-d.midi) then
-      sample_closest=sample
-      sample_closest.i=i
+  -- go through the samples randomly
+  local sample_is={}
+  for i,sample in ipairs(self.instrument[d.name]) do
+    table.insert(sample_is,i)
+  end
+  -- shuffle
+  local sample_is_shuffled={}
+  for i,v in ipairs(sample_is) do
+    local pos=math.random(1,#sample_is_shuffled+1)
+    table.insert(sample_is_shuffled,pos,v)
+  end
+  for _,i in ipairs(sample_is_shuffled) do
+    local sample=self.instrument[d.name][i]
+    if (d.dynamic==sample.dynamic and d.is_release==sample.is_release) or (d.is_release==true and sample.is_release==true) then
+      if math.abs(sample.midi-d.midi)<math.abs(sample_closest.midi-d.midi) then
+        sample_closest=sample
+        sample_closest.i=i
+      end
+      if math.abs(sample.midi-d.midi)<math.abs(sample_closest_loaded.midi-d.midi) and sample.buffer>-1 then
+        sample_closest_loaded=sample
+        sample_closest_loaded.i=i
+      end
     end
-    if math.abs(sample.midi-d.midi)<math.abs(sample_closest_loaded.midi-d.midi) and sample.buffer>-1 then
-      sample_closest_loaded=sample
-      sample_closest_loaded.i=i
+  end
+
+
+  local voice_i=-1
+  if sample_closest_loaded.buffer>-1 then
+    -- assign the new voice
+    voice_i=self:get_voice()
+    self.voice[voice_i].active={name=d.name,midi=d.midi,i=sample_closest_loaded.i}
+    print("sample_closest_loaded: "..sample_closest_loaded.filename.." on voice "..voice_i)
+
+    -- play it from the engine
+
+    -- compute pan (special for pianos!)
+    local pan=params:get("superkeys_pan")
+    if string.find(d.name,"piano") then
+      pan=util.linlin(21,108,-0.85,0.85,d.midi)
     end
+
+    -- compute rate
+    local rate=d.rate
+    if d.is_release and rate==nil then
+      rate=1
+    elseif rate==nil then
+      rate=MusicUtil.note_num_to_freq(d.midi)/MusicUtil.note_num_to_freq(sample_closest_loaded.midi)*(MusicUtil.note_num_to_freq(d.midi+params:get("superkeys_tranpose_sample"))/MusicUtil.note_num_to_freq(d.midi))
+    end
+
+    -- compute amp
+    -- TODO: multiply amp by velocity curve?
+    local amp=params:get("superkeys_amp")
+
+    engine.superkeyson(
+      voice_i,
+      sample_closest_loaded.buffer,
+      rate,
+      d.amp or amp,
+      d.pan or pan,
+      d.attack or params:get("superkeys_attack"),
+      d.decay or params:get("superkeys_decay"),
+      d.sustain or params:get("superkeys_sustain"),
+      d.release or params:get("superkeys_release"),
+      d.lpf or params:get("superkeys_lpf_superkeys"),
+      d.hpf or params:get("superkeys_hpf_superkeys"),
+      clock.get_beat_sec(),
+      d.delay or delay_rates[params:get("superkeys_delay_rate")],
+      d.delay_time or params:get("superkeys_delay_times")/100,
+      d.delay_send or params:get("superkeys_delay_send")/100
+    )
   end
-end
 
-
-local voice_i=-1
-if sample_closest_loaded.buffer>-1 then
-  -- assign the new voice
-  voice_i=self:get_voice()
-  self.voice[voice_i].active={name=d.name,midi=d.midi,i=sample_closest_loaded.i}
-  print("sample_closest_loaded: "..sample_closest_loaded.filename.." on voice "..voice_i)
-
-  -- play it from the engine
-
-  -- compute pan (special for pianos!)
-  local pan=params:get("superkeys_pan")
-  if string.find(d.name,"piano") then
-    pan=util.linlin(21,108,-0.85,0.85,d.midi)
+  -- load sample if not loaded
+  if sample_closest.buffer==-1 then
+    print("loading:")
+    tab.print(sample_closest)
+    self.instrument[d.name][sample_closest.i].buffer=self.buffer
+    engine.superkeysload(self.buffer,sample_closest.filename)
+    self.buffer=self.buffer+1
   end
 
-  -- compute rate
-  local rate=d.rate
-  if d.is_release and rate==nil then
-    rate=1
-  elseif rate==nil then
-    rate=MusicUtil.note_num_to_freq(d.midi)/MusicUtil.note_num_to_freq(sample_closest_loaded.midi)*(MusicUtil.note_num_to_freq(d.midi+params:get("superkeys_tranpose_sample"))/MusicUtil.note_num_to_freq(d.midi))
-  end
-
-  -- compute amp
-  -- TODO: multiply amp by velocity curve?
-  local amp=params:get("superkeys_amp")
-print(
-    voice_i,
-    sample_closest_loaded.buffer,
-    rate,
-  d.amp or  amp,
-  d.pan or pan,
-  d.attack or params:get("superkeys_attack"),
-  d.decay or params:get("superkeys_decay"),
-  d.sustain or params:get("superkeys_sustain"),
-   d.release or params:get("superkeys_release"),
-  d.lpf or params:get("superkeys_lpf_superkeys"),
-  d.hpf or params:get("superkeys_hpf_superkeys"),
-  clock.get_beat_sec(),
-  d.delay or delay_rates[params:get("superkeys_delay_rate")],
-  d.delay_time or params:get("superkeys_delay_times")/100,
-  d.delay_send or params:get("superkeys_delay_send")/100
-)
-  engine.superkeyson(
-    voice_i,
-    sample_closest_loaded.buffer,
-    rate,
-  d.amp or  amp,
-  d.pan or pan,
-  d.attack or params:get("superkeys_attack"),
-  d.decay or params:get("superkeys_decay"),
-  d.sustain or params:get("superkeys_sustain"),
-   d.release or params:get("superkeys_release"),
-  d.lpf or params:get("superkeys_lpf_superkeys"),
-  d.hpf or params:get("superkeys_hpf_superkeys"),
-  clock.get_beat_sec(),
-  d.delay or delay_rates[params:get("superkeys_delay_rate")],
-  d.delay_time or params:get("superkeys_delay_times")/100,
-  d.delay_send or params:get("superkeys_delay_send")/100
-)
-end
-
--- load sample if not loaded
-if sample_closest.buffer==-1 then
-  print("loading:")
-  tab.print(sample_closest)
-  self.instrument[d.name][sample_closest.i].buffer=self.buffer
-  engine.superkeysload(self.buffer,sample_closest.filename)
-  self.buffer=self.buffer+1
-end
-
-return voice_i
+  return voice_i
 end
 
 function Superkeys:off(d)
   -- {name="something", midi=40, is_release=True|False}
 
   -- use spaes or undersores
-  d.name = d.name:gsub(" ","_")
+  d.name=d.name:gsub(" ","_")
 
   if d.is_release==nil then
     d.is_release=false
@@ -380,13 +364,13 @@ function Superkeys:get_voice()
   -- gets voice based on the oldest
   local oldest={i=0,age=current_time()}
   for i,voice in ipairs(self.voice) do
-    if voice.age<oldest.age and voice.active.midi == 0 then
+    if voice.age<oldest.age and voice.active.midi==0 then
       oldest={i=i,age=voice.age}
     end
   end
   -- todo find the oldest in case some are not available
-  if oldest.i == 0 then 
-    oldest.i = 1
+  if oldest.i==0 then
+    oldest.i=1
   end
   -- turn off voice
   engine.superkeysoff(oldest.i)
