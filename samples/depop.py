@@ -107,15 +107,15 @@ def depop(filename,newfilename,channel=0):
     z_std = np.std(zmean[-500:])
 
     peaks, _ = signal.find_peaks(zmean,height=z_std*6,prominence=10)
-
     if debug_depop:
+        print(peaks)
         plt.plot(t,zmean)
         plt.plot(t[peaks],zmean[peaks],'o')
         plt.title("ch {}".format(channel))
         plt.show()
 
     for _, ind in enumerate(peaks):
-        if t[ind] < 0.05 or t[ind] > length-0.05:
+        if t[ind] < 0.005 or t[ind] > length-0.005:
             continue
         # assume a pop width of 6 ms
         r = np.where(np.logical_and(time>t[ind]-0.003,time<t[ind]+0.003))
@@ -154,6 +154,8 @@ def depop_file(filename,newfilename=""):
     if newfilename == "foo.wav":
         shutil.copy(newfilename,filename)
 
+#print("depopping")
+#depop_file('79.2.3.1.0.wav')
 
 # if debug_depop:
 #   depop_file("54.1.2.1.0.wav","test1.wav")
