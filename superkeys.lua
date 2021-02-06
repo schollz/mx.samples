@@ -18,7 +18,6 @@ available_instruments={
   {name="cello",size=22*1.5},
   {name="cello pad",size=4*1.5},
   {name="ghost piano",size=40*1.5},
-  {name="kawai felt",size=63*1.5},
   {name="steinway model b",size=128*1.5},
   {name="tatak piano",size=127*1.5},
 }
