@@ -32,7 +32,7 @@ local function _list_files(d,files,recursive)
     f:close()
     for s in out:gmatch("%S+") do
       if not (string.match(s,"ls: ") or s=="../" or s=="./") then
-        files=list_files(s,files,recursive)
+        files=_list_files(s,files,recursive)
       end
     end
   end
@@ -99,7 +99,7 @@ found_wav = true
           dynamic=tonumber(foo[2]),
           dynamics=tonumber(foo[3]),
           variation=tonumber(foo[4]),
-        release=foo[5]=="1"})
+        is_release=foo[5]=="1"})
       end
     end
     if found_wav then 
@@ -140,7 +140,7 @@ found_wav = true
     type='control',
     id="superkeys_attack",
     name="attack",
-  controlspec=controlspec.new(0,10,'lin',0,0.015,'s')}
+  controlspec=controlspec.new(0,10,'lin',0,0,'s')}
   params:add {
     type='control',
     id="superkeys_decay",
@@ -226,9 +226,9 @@ end
 
 
 function Superkeys:on(d)
-  -- {name="piano",midi=40,velocity=60,release=True|False}
-  if d.release==nil then
-    d.release=false
+  -- {name="piano",midi=40,velocity=60,is_release=True|False}
+  if d.is_release==nil then
+    d.is_release=false
   end
   if d.velocity==nil then
     d.velocity=127
@@ -261,7 +261,7 @@ for i,v in ipairs(sample_is) do
 end
 for _,i in ipairs(sample_is_shuffled) do
   local sample=self.instrument[d.name][i]
-  if (d.dynamic==sample.dynamic and d.release==sample.release) or (d.release==true and sample.release==true) then
+  if (d.dynamic==sample.dynamic and d.is_release==sample.is_release) or (d.is_release==true and sample.is_release==true) then
     if math.abs(sample.midi-d.midi)<math.abs(sample_closest.midi-d.midi) then
       sample_closest=sample
       sample_closest.i=i
@@ -291,7 +291,7 @@ if sample_closest_loaded.buffer>-1 then
 
   -- compute rate
   local rate=d.rate
-  if d.release and rate==nil then
+  if d.is_release and rate==nil then
     rate=1
   elseif rate==nil then
     rate=MusicUtil.note_num_to_freq(d.midi)/MusicUtil.note_num_to_freq(sample_closest_loaded.midi)*(MusicUtil.note_num_to_freq(d.midi+params:get("superkeys_tranpose_sample"))/MusicUtil.note_num_to_freq(d.midi))
@@ -300,7 +300,23 @@ if sample_closest_loaded.buffer>-1 then
   -- compute amp
   -- TODO: multiply amp by velocity curve?
   local amp=params:get("superkeys_amp")
-
+print(
+    voice_i,
+    sample_closest_loaded.buffer,
+    rate,
+  d.amp or  amp,
+  d.pan or pan,
+  d.attack or params:get("superkeys_attack"),
+  d.decay or params:get("superkeys_decay"),
+  d.sustain or params:get("superkeys_sustain"),
+   d.release or params:get("superkeys_release"),
+  d.lpf or params:get("superkeys_lpf_superkeys"),
+  d.hpf or params:get("superkeys_hpf_superkeys"),
+  clock.get_beat_sec(),
+  d.delay or delay_rates[params:get("superkeys_delay_rate")],
+  d.delay_time or params:get("superkeys_delay_times")/100,
+  d.delay_send or params:get("superkeys_delay_send")/100
+)
   engine.superkeyson(
     voice_i,
     sample_closest_loaded.buffer,
@@ -333,9 +349,9 @@ return voice_i
 end
 
 function Superkeys:off(d)
-  -- {name="something", midi=40, release=True|False}
-  if d.release==nil then
-    d.release=false
+  -- {name="something", midi=40, is_release=True|False}
+  if d.is_release==nil then
+    d.is_release=false
   end
 
   -- find the voice being used for this one
@@ -350,7 +366,7 @@ function Superkeys:off(d)
       -- add a release sound effect if its not a release
       if self.instrument[d.name][1].has_release and math.random(100)<params:get("superkeys_play_release") then
         print("doing release!")
-        local voice_i=self:on{name=d.name,release=true,midi=d.midi,variation=d.variation}
+        local voice_i=self:on{name=d.name,is_release=true,midi=d.midi,variation=d.variation}
         clock.run(function()
           clock.sleep(0.5)
           self.voice[voice_i].active={name="",midi=0}

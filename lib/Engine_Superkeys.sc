@@ -34,7 +34,7 @@ Engine_Superkeys : CroneEngine {
 					Env.new(
 						curve: 'cubed',
 						levels: [0,1,sustain,0],
-						times: [attack,decay,release],
+						times: [attack+0.015,decay,release],
 						releaseNode: 2,
 					),
 					gate: envgate,
@@ -53,10 +53,10 @@ Engine_Superkeys : CroneEngine {
 				]);
 				snd = snd * amp * ender;
 		        snd = snd*0.5 +
-		        	(delaySend>0)*CombN.ar(
+		        	((delaySend>0)*CombN.ar(
 		        		snd,
 						1,secondsPerBeat*delayBeats,secondsPerBeat*delayBeats*LinLin.kr(delayFeedback,0,1,2,128),0.5*delaySend // delayFeedback should vary between 2 and 128
-					); 
+					)); 
 				Out.ar(0,snd)
 			}).add;	
 		});
@@ -85,8 +85,8 @@ Engine_Superkeys : CroneEngine {
 				\pan,msg[5],
 				\attack,msg[6],
 				\decay,msg[7],
-				\release,msg[8],
-				\sustain,msg[9],
+				\sustain,msg[8],
+				\release,msg[9],
 				\lpf,msg[10],
 				\hpf,msg[11],
 				\secondsPerBeat,msg[12],
