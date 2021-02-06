@@ -24,7 +24,7 @@ Engine_Superkeys : CroneEngine {
 				arg bufnum, amp, t_trig=0,envgate=1,
 				attack=0.015,decay=1,release=2,sustain=0.9,
 				sampleStart=0,sampleEnd=1,rate=1,pan=0,
-				lpf=20000,resonance=1.0,hpf=10,notch1=20000,notch2=20000,
+				lpf=20000,hpf=10,
 				bitcrushSampleRate=48000,bitcrushBits=32,
 				secondsPerBeat=1,delayBeats=8,delayFeedback=1,delaySend=0;
 				// vars
@@ -45,21 +45,18 @@ Engine_Superkeys : CroneEngine {
 				 	startPos: ((sampleStart*(rate>0))+(sampleEnd*(rate<0)))*BufFrames.kr(bufnum),
 				 	trigger:t_trig,
 				);
-		        // snd = BRF.ar(snd,notch1,0.8);
-		        // snd = BRF.ar(snd,notch2,0.8);
-		        // snd = Decimator.ar(snd,bitcrushSampleRate,bitcrushBits);
-		        // snd = LPF.ar(snd,lpf);
-		        // snd = HPF.ar(snd,hpf);
+		        snd = LPF.ar(snd,lpf);
+		        snd = HPF.ar(snd,hpf);
 				snd = Mix.ar([
 					Pan2.ar(snd[0],-1+(2*pan),amp),
 					Pan2.ar(snd[1],1+(2*pan),amp),
 				]);
 				snd = snd * amp * ender;
-		   //      snd = snd*0.5 +
-		   //      	CombN.ar(
-		   //      		snd,
-					// 	1,secondsPerBeat*delayBeats,secondsPerBeat*delayBeats*LinLin.kr(delayFeedback,0,1,2,128),0.5*delaySend // delayFeedback should vary between 2 and 128
-					// ); 
+		        snd = snd*0.5 +
+		        	(delaySend>0)*CombN.ar(
+		        		snd,
+						1,secondsPerBeat*delayBeats,secondsPerBeat*delayBeats*LinLin.kr(delayFeedback,0,1,2,128),0.5*delaySend // delayFeedback should vary between 2 and 128
+					); 
 				Out.ar(0,snd)
 			}).add;	
 		});
@@ -77,7 +74,7 @@ Engine_Superkeys : CroneEngine {
 			sampleBuffSuperkeys[msg[1]] = Buffer.read(context.server,msg[2]);
 		});
 
-		this.addCommand("superkeyson","iifffffffffff", { arg msg;
+		this.addCommand("superkeyson","iifffffffffffff", { arg msg;
 			// lua is sending 1-index
 			samplerPlayerSuperkeys[msg[1]-1].set(
 				\t_trig,1,
@@ -86,16 +83,16 @@ Engine_Superkeys : CroneEngine {
 				\rate,msg[3],
 				\amp,msg[4],
 				\pan,msg[5],
-				\lpf,msg[6],
-				\hpf,msg[7],
-				\notch1,msg[8],
-				\notch2,msg[9],
-				// \bitcrushSampleRate,msg[10],
-				// \bitcrushBits,msg[11],
-				\secondsPerBeat,msg[10],
-				\delayBeats,msg[11],
-				\delayFeedback,msg[12],
-				\delaySend,msg[13],
+				\attack,msg[6],
+				\decay,msg[7],
+				\release,msg[8],
+				\sustain,msg[9],
+				\lpf,msg[10],
+				\hpf,msg[11],
+				\secondsPerBeat,msg[12],
+				\delayBeats,msg[13],
+				\delayFeedback,msg[14],
+				\delaySend,msg[15],
 			);
 		});
 

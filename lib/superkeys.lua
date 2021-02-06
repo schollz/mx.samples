@@ -124,13 +124,38 @@ found_wav = true
   end
 
   -- add parameters
-  params:add_group("SUPERKEYS",12)
+  params:add_group("SUPERKEYS",14)
   local filter_freq=controlspec.new(20,20000,'exp',0,20000,'Hz')
   params:add {
     type='control',
     id="superkeys_amp",
     name="amp",
   controlspec=controlspec.new(0,10,'lin',0,1.0,'amp')}
+  params:add {
+    type='control',
+    id="superkeys_pan",
+    name="pan",
+  controlspec=controlspec.new(-1,1,'lin',0,0)}
+  params:add {
+    type='control',
+    id="superkeys_attack",
+    name="attack",
+  controlspec=controlspec.new(0,10,'lin',0,0.015,'s')}
+  params:add {
+    type='control',
+    id="superkeys_decay",
+    name="decay",
+  controlspec=controlspec.new(0,10,'lin',0,1,'s')}
+  params:add {
+    type='control',
+    id="superkeys_sustain",
+    name="sustain",
+  controlspec=controlspec.new(0,2,'lin',0,0.9,'amp')}
+  params:add {
+    type='control',
+    id="superkeys_release",
+    name="release",
+  controlspec=controlspec.new(0,10,'lin',0,2,'s')}
   params:add {
     type='control',
     id="superkeys_tranpose_midi",
@@ -143,11 +168,6 @@ found_wav = true
   controlspec=controlspec.new(-24,24,'lin',0,0,'note')}
   params:add {
     type='control',
-    id="superkeys_pan",
-    name="pan",
-  controlspec=controlspec.new(-1,1,'lin',0,0)}
-  params:add {
-    type='control',
     id='superkeys_lpf_superkeys',
     name='low-pass filter',
     controlspec=filter_freq,
@@ -158,20 +178,6 @@ found_wav = true
     id='superkeys_hpf_superkeys',
     name='high-pass filter',
     controlspec=controlspec.new(20,20000,'exp',0,20,'Hz'),
-    formatter=Formatters.format_freq
-  }
-  params:add {
-    type='control',
-    id='superkeys_notch1_superkeys',
-    name='notch filter 1',
-    controlspec=filter_freq,
-    formatter=Formatters.format_freq
-  }
-  params:add {
-    type='control',
-    id='superkeys_notch2_superkeys',
-    name='notch filter 2',
-    controlspec=filter_freq,
     formatter=Formatters.format_freq
   }
   params:add {
@@ -299,16 +305,18 @@ if sample_closest_loaded.buffer>-1 then
     voice_i,
     sample_closest_loaded.buffer,
     rate,
-    amp,
-    pan,
-  params:get("superkeys_lpf_superkeys"),
-  params:get("superkeys_hpf_superkeys"),
-  params:get("superkeys_notch1_superkeys"),
-  params:get("superkeys_notch2_superkeys"),
+  d.amp or  amp,
+  d.pan or pan,
+  d.attack or params:get("superkeys_attack"),
+  d.decay or params:get("superkeys_decay"),
+  d.sustain or params:get("superkeys_sustain"),
+   d.release or params:get("superkeys_release"),
+  d.lpf or params:get("superkeys_lpf_superkeys"),
+  d.hpf or params:get("superkeys_hpf_superkeys"),
   clock.get_beat_sec(),
-  delay_rates[params:get("superkeys_delay_rate")],
-  params:get("superkeys_delay_times")/100,
-  params:get("superkeys_delay_send")/100
+  d.delay or delay_rates[params:get("superkeys_delay_rate")],
+  d.delay_time or params:get("superkeys_delay_times")/100,
+  d.delay_send or params:get("superkeys_delay_send")/100
 )
 end
 
@@ -364,7 +372,7 @@ function Superkeys:get_voice()
   end
   -- todo find the oldest in case some are not available
   if oldest.i == 0 then 
-    oldest.i == 1
+    oldest.i = 1
   end
   -- turn off voice
   engine.superkeysoff(oldest.i)
