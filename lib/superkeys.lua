@@ -71,7 +71,6 @@ function Superkeys:new(args)
   local args=args==nil and {} or args
   l.instrument={} -- map instrument name to list of samples
   l.buffer=0
-  l.voice_num=0 -- TODO: keep track of voices and buffer numbers
   l.voice={} -- list of voices and how hold they are
   for i=1,VOICE_NUM do
     l.voice[i]={age=current_time(),active={name="",midi=0}}
@@ -124,7 +123,7 @@ function Superkeys:new(args)
   end
 
   -- add parameters
-  params:add_group("SUPERKEYS",14)
+  params:add_group("SUPERKEYS",15)
   local filter_freq=controlspec.new(20,20000,'exp',0,20000,'Hz')
   params:add {
     type='control',
@@ -196,6 +195,7 @@ function Superkeys:new(args)
     id="superkeys_play_release",
     name="play release prob",
   controlspec=controlspec.new(0,100,'lin',0,50,'%',1/100)}
+  params:add_option("superkeys_scale_velocity","scale with velocity",{"off","on"})
 
   return l
 end
@@ -292,8 +292,15 @@ function Superkeys:on(d)
     end
 
     -- compute amp
-    -- TODO: multiply amp by velocity curve?
+    -- multiply amp by velocity curve
     local amp=params:get("superkeys_amp")
+    local scale_amp = params:get("superkeys_scale_velocity")==2
+    if d.scale_velocity ~= nil then 
+      scale_amp = d.scale_velocity
+    end
+    if scale_amp then 
+      amp = amp * d.velocity / 127 
+    end
 
     engine.superkeyson(
       voice_i,
@@ -361,17 +368,23 @@ function Superkeys:off(d)
 end
 
 function Superkeys:get_voice()
-  -- gets voice based on the oldest
+  -- gets voice based on the oldest that is not being used
   local oldest={i=0,age=current_time()}
   for i,voice in ipairs(self.voice) do
     if voice.age<oldest.age and voice.active.midi==0 then
       oldest={i=i,age=voice.age}
     end
   end
-  -- todo find the oldest in case some are not available
+  
+  -- found none - now just take the oldest
   if oldest.i==0 then
-    oldest.i=1
+    for i,voice in ipairs(self.voice) do
+      if voice.age<oldest.age then
+        oldest={i=i,age=voice.age}
+      end
+    end
   end
+
   -- turn off voice
   engine.superkeysoff(oldest.i)
   self.voice[oldest.i].age=current_time()

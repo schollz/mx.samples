@@ -15,7 +15,6 @@ Engine_Superkeys : CroneEngine {
 	alloc {
 
 		sampleBuffSuperkeys = Array.fill(200, { arg i; 
-			// Buffer.read(context.server, "/home/we/dust/code/superkeys/samples/silence.wav"); 
 			Buffer.new(context.server);
 		});
 
@@ -25,8 +24,8 @@ Engine_Superkeys : CroneEngine {
 				attack=0.015,decay=1,release=2,sustain=0.9,
 				sampleStart=0,sampleEnd=1,rate=1,pan=0,
 				lpf=20000,hpf=10,
-				bitcrushSampleRate=48000,bitcrushBits=32,
 				secondsPerBeat=1,delayBeats=8,delayFeedback=1,delaySend=0;
+
 				// vars
 				var ender,snd;
 
