@@ -6,6 +6,8 @@ local Formatters=require 'formatters'
 
 local Superkeys={}
 
+local VOICE_NUM = 14
+
 local delay_rates_names={"whole-note","half-note","quarter note","eighth note","sixteenth note","thirtysecond"}
 local delay_rates={4,2,1,1/2,1/4,1/8,1/16}
 
@@ -71,7 +73,7 @@ function Superkeys:new(args)
   l.buffer=0
   l.voice_num=0 -- TODO: keep track of voices and buffer numbers
   l.voice={} -- list of voices and how hold they are
-  for i=1,14 do
+  for i=1,VOICE_NUM do
     l.voice[i]={age=current_time(),active={name="",midi=0}}
   end
 
@@ -128,7 +130,7 @@ found_wav = true
     type='control',
     id="superkeys_amp",
     name="amp",
-  controlspec=controlspec.new(0,1,'lin',0,1.0,'amp')}
+  controlspec=controlspec.new(0,10,'lin',0,1.0,'amp')}
   params:add {
     type='control',
     id="superkeys_tranpose_midi",
@@ -333,6 +335,7 @@ function Superkeys:off(d)
     if voice.active.name==d.name and voice.active.midi==d.midi then
       -- this is the one!
       print("superkeys: turning off "..d.name..":"..d.midi)
+      self.voice[i].age=current_time()
       self.voice[i].active={name="",midi=0}
       engine.superkeysoff(i)
 
@@ -340,11 +343,11 @@ function Superkeys:off(d)
       if self.instrument[d.name][1].has_release and math.random(100)<params:get("superkeys_play_release") then
         print("doing release!")
         local voice_i=self:on{name=d.name,release=true,midi=d.midi,variation=d.variation}
-        -- clock.run(function()
-        --   clock.sleep(1)
-        --   self.voice[voice_i].active={name="",midi=0}
-        --   engine.superkeysoff(voice_i)
-        -- end)
+        clock.run(function()
+          clock.sleep(0.5)
+          self.voice[voice_i].active={name="",midi=0}
+          engine.superkeysoff(voice_i)
+        end)
       end
       do return end
     end
@@ -355,10 +358,16 @@ function Superkeys:get_voice()
   -- gets voice based on the oldest
   local oldest={i=0,age=current_time()}
   for i,voice in ipairs(self.voice) do
-    if voice.age<oldest.age then
+    if voice.age<oldest.age and voice.active.midi == 0 then
       oldest={i=i,age=voice.age}
     end
   end
+  -- todo find the oldest in case some are not available
+  if oldest.i == 0 then 
+    oldest.i == 1
+  end
+  -- turn off voice
+  engine.superkeysoff(oldest.i)
   self.voice[oldest.i].age=current_time()
   return oldest.i
 end
