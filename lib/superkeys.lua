@@ -78,35 +78,9 @@ function Superkeys:new(args)
 
   -- lets add files
   local sample_folders=list_files(_path.code.."superkeys/samples/")
-  local num_instruments=0
-  l.instrument_names={}
   for _,sample_folder_path in ipairs(sample_folders) do
-    _,sample_folder,_=string.match(sample_folder_path,"(.-)([^\\/]-%.?([^%.\\/]*))/$")
-    files=list_files(sample_folder_path)
-    local found_wav=false
-    for _,fname in ipairs(files) do
-      if string.find(fname,".wav") then
-        found_wav=true
-        -- WORK
-        pathname,filename,ext=string.match(fname,"(.-)([^\\/]-%.?([^%.\\/]*))$")
-        -- midival,dynamic,dynamics,variation,release
-        local foo=split_str(filename,".")
-        l:add({
-          name=sample_folder,
-          filename=fname,
-          midi=tonumber(foo[1]),
-          dynamic=tonumber(foo[2]),
-          dynamics=tonumber(foo[3]),
-          variation=tonumber(foo[4]),
-        is_release=foo[5]=="1"})
-      end
-    end
-    if found_wav then
-      num_instruments=num_instruments+1
-      table.insert(l.instrument_names,sample_folder)
-    end
+    l:add_folder(sample_folder_path)
   end
-  table.sort(l.instrument_names)
 
   -- check for and add that a key has release
   for sample_name,samples in pairs(l.instrument) do
@@ -123,7 +97,7 @@ function Superkeys:new(args)
   end
 
   -- add parameters
-  params:add_group("SUPERKEYS",15)
+  params:add_group("SUPERKEYS",16)
   local filter_freq=controlspec.new(20,20000,'exp',0,20000,'Hz')
   params:add {
     type='control',
@@ -159,12 +133,17 @@ function Superkeys:new(args)
     type='control',
     id="superkeys_tranpose_midi",
     name="transpose midi",
-  controlspec=controlspec.new(-24,24,'lin',0,0,'note')}
+  controlspec=controlspec.new(-24,24,'lin',0,0,'note',1/48)}
   params:add {
     type='control',
     id="superkeys_tranpose_sample",
     name="transpose sample",
-  controlspec=controlspec.new(-24,24,'lin',0,0,'note')}
+  controlspec=controlspec.new(-24,24,'lin',0,0,'note',1/48)}
+  params:add {
+    type='control',
+    id="superkeys_tune",
+    name="tune sample",
+  controlspec=controlspec.new(-1,1,'lin',0,0,'%',1/1000)}
   params:add {
     type='control',
     id='superkeys_lpf_superkeys',
@@ -200,8 +179,43 @@ function Superkeys:new(args)
   return l
 end
 
+function Superkeys:add_folder(sample_folder_path)
+  _,sample_folder,_=string.match(sample_folder_path,"(.-)([^\\/]-%.?([^%.\\/]*))/$")
+  -- make sure it doesn't exist 
+  for _, instrument in ipairs(self.instrument) do 
+    if instrument.name==sample_folder then 
+      do return end 
+    end
+  end
+  files=list_files(sample_folder_path)
+  local found_wav=false
+  for _,fname in ipairs(files) do
+    if string.find(fname,".wav") then
+      found_wav=true
+      -- WORK
+      pathname,filename,ext=string.match(fname,"(.-)([^\\/]-%.?([^%.\\/]*))$")
+      -- midival,dynamic,dynamics,variation,release
+      local foo=split_str(filename,".")
+      self:add({
+        name=sample_folder,
+        filename=fname,
+        midi=tonumber(foo[1]),
+        dynamic=tonumber(foo[2]),
+        dynamics=tonumber(foo[3]),
+        variation=tonumber(foo[4]),
+      is_release=foo[5]=="1"})
+    end
+  end
+  return found_wav
+end
+
 function Superkeys:list_instruments()
-  return self.instrument_names
+  local names = {}
+  for _, instrument in ipairs(self.instrument) do
+    table.insert(names,instrument.name)
+  end
+  table.sort(names)
+  return names
 end
 
 function Superkeys:add(sample)
@@ -220,6 +234,7 @@ function Superkeys:on(d)
 
   -- use spaes or undersores
   d.name=d.name:gsub(" ","_")
+  tab.print(d)
 
   if d.is_release==nil then
     d.is_release=false
@@ -290,6 +305,7 @@ function Superkeys:on(d)
     elseif rate==nil then
       rate=MusicUtil.note_num_to_freq(d.midi)/MusicUtil.note_num_to_freq(sample_closest_loaded.midi)*(MusicUtil.note_num_to_freq(d.midi+params:get("superkeys_tranpose_sample"))/MusicUtil.note_num_to_freq(d.midi))
     end
+    rate = rate + (d.tune or params:get("superkeys_tune"))/10
 
     -- compute amp
     -- multiply amp by velocity curve

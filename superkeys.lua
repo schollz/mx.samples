@@ -70,7 +70,11 @@ function update_uilist()
     end
     table.insert(items,s)
   end
-  uilist=UI.ScrollingList.new(0,0,1,items)
+  local index = 1
+  if uilist ~= nil then 
+    index = uilist.index 
+  end
+  uilist=UI.ScrollingList.new(0,0,index,items)
 end
 
 function os.capture(cmd,raw)
@@ -93,17 +97,21 @@ function key(k,z)
     local i=uilist.index
     if available_instruments[i].downloaded then
       instrument_current=i
+      update_uilist()
     elseif download_available>0 then
       if k==2 then
         download_available=0
       elseif k==3 then
         -- download!
         downloading=true
+        redraw()
         clock.run(function()
           download(available_instruments[download_available].id)
           update_uilist()
+          skeys:add_folder(_path.code.."superkeys/samples/"..available_instruments[download_available].id.."/")
           download_available=0
           downloading=false
+          redraw()
         end)
       end
     else
@@ -116,7 +124,7 @@ end
 function download(id)
   local url="https://github.com/schollz/superkeys/releases/download/samples/"..id..".zip"
   local download_file=_path.code.."superkeys/samples/"..id.."/download.zip"
-  cmd="curl -o "..download_file.." "..url
+  cmd="curl -L -o "..download_file.." "..url
   print(cmd)
   os.execute(cmd)
   cmd="unzip "..download_file.." -d ".._path.code.."superkeys/samples/"..id.."/"
