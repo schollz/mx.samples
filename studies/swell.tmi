@@ -1,0 +1,22 @@
+chain a b b b b b b b b 
+
+pattern a
+.
+.
+.
+. Cmaj7 - - -
+
+
+pattern b
+Cmaj7;5 - - - - Em7
+- - - - f5,g,a,c 
+- - - - - g5,c,e,g,b 
+- 
+. . . .  Em7
+- - - - f5,g,a,c 
+- - - - - g5,c,e,g,b 
+- - - - - Cmaj7;5
+- - - - Em7
+- - - - f5,g,a,c 
+- - - - - g5,c,e,g,b 
+-  . 

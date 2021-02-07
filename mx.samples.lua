@@ -43,7 +43,7 @@ function init()
     end
   end
 
-  clock.run(redraw_clock) -- start the grid redraw clock
+  clock.run(redraw_clock) 
 end
 
 function update_uilist()

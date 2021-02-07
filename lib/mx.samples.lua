@@ -12,7 +12,8 @@ local delay_rates_names={"whole-note","half-note","quarter note","eighth note","
 local delay_rates={4,2,1,1/2,1/4,1/8,1/16}
 
 local function current_time()
-  return clock.get_beat_sec()*clock.get_beats()
+  return os.time()
+  -- return clock.get_beat_sec()*clock.get_beats()
 end
 
 
@@ -131,12 +132,12 @@ function MxSamples:new(args)
   controlspec=controlspec.new(0,10,'lin',0,2,'s')}
   params:add {
     type='control',
-    id="mxsamples_tranpose_midi",
+    id="mxsamples_transpose_midi",
     name="transpose midi",
   controlspec=controlspec.new(-24,24,'lin',0,0,'note',1/48)}
   params:add {
     type='control',
-    id="mxsamples_tranpose_sample",
+    id="mxsamples_transpose_sample",
     name="transpose sample",
   controlspec=controlspec.new(-24,24,'lin',0,0,'note',1/48)}
   params:add {
@@ -250,7 +251,7 @@ function MxSamples:on(d)
   end
 
   -- transpose midi before finding sample
-  d.midi=d.midi+params:get("mxsamples_tranpose_midi")
+  d.midi=d.midi+(d.transpose_midi or params:get("mxsamples_transpose_midi"))
 
   -- find the sample that is closest to the midi
   -- with the specified dynamic
@@ -303,7 +304,11 @@ function MxSamples:on(d)
     if d.is_release and rate==nil then
       rate=1
     elseif rate==nil then
-      rate=MusicUtil.note_num_to_freq(d.midi)/MusicUtil.note_num_to_freq(sample_closest_loaded.midi)*(MusicUtil.note_num_to_freq(d.midi+params:get("mxsamples_tranpose_sample"))/MusicUtil.note_num_to_freq(d.midi))
+      local transpose_sample = d.transpose_sample
+      if transpose_sample == nil then 
+        transpose_sample = params:get("mxsamples_transpose_sample")
+      end
+      rate=MusicUtil.note_num_to_freq(d.midi)/MusicUtil.note_num_to_freq(sample_closest_loaded.midi)*(MusicUtil.note_num_to_freq(d.midi+transpose_sample)/MusicUtil.note_num_to_freq(d.midi))
     end
     local cents = d.tune 
     if cents == nil then 
@@ -335,8 +340,8 @@ function MxSamples:on(d)
       d.lpf or params:get("mxsamples_lpf_mxsamples"),
       d.hpf or params:get("mxsamples_hpf_mxsamples"),
       clock.get_beat_sec(),
-      d.delay or delay_rates[params:get("mxsamples_delay_rate")],
-      d.delay_time or params:get("mxsamples_delay_times")/100,
+      d.delay_rate or delay_rates[params:get("mxsamples_delay_rate")],
+      d.delay_times or params:get("mxsamples_delay_times")/100,
       d.delay_send or params:get("mxsamples_delay_send")/100
     )
   end
@@ -403,6 +408,9 @@ function MxSamples:get_voice()
         oldest={i=i,age=voice.age}
       end
     end
+  end
+  if oldest.i == 0 then 
+    oldest.i = 1
   end
 
   -- turn off voice
