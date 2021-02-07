@@ -1,8 +1,12 @@
--- mxsamples v0.0.0
--- sample player
+-- mx.samples v0.0.1
+-- download and play samples
 --
 -- llllllll.co/t/mxsamples
 --
+-- 1. plug in a midi controller
+-- 2. select a sample.
+-- 3. profit.
+
 local UI=require "ui"
 mxsamples=include("mx.samples/lib/mx.samples")
 

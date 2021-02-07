@@ -1,4 +1,9 @@
 -- study1
+--
+-- combining mx.samples
+-- with tmi
+-- 
+-- see the code for info
 
 local UI=require "ui"
 mxsamples=include("mx.samples/lib/mx.samples")
@@ -19,10 +24,10 @@ function init()
 	      {name="swell",note_on="skeys:on({name='alto_sax_choir',midi=<note>,velocity=<velocity>/2,attack=1,release=2,amp=0.45,transpose_midi=-12,delay_send=0.5,delay_times=4/100,delay_rate=1/2})",note_off="skeys:off({name='alto_sax_choir',midi=<note>})"},
 	    },
 	  })
-	  m:load("chords","/home/we/dust/code/mx.samples/study1/chords.tmi",1)
-	  m:load("bass","/home/we/dust/code/mx.samples/study1/bass.tmi",2)
-	  m:load("melody","/home/we/dust/code/mx.samples/study1/melody.tmi",3)
-	  m:load("swell","/home/we/dust/code/mx.samples/study1/swell.tmi",4)
+	  m:load("chords","/home/we/dust/code/mx.samples/studies/chords.tmi",1)
+	  m:load("bass","/home/we/dust/code/mx.samples/studies/bass.tmi",2)
+	  m:load("melody","/home/we/dust/code/mx.samples/studies/melody.tmi",3)
+	  m:load("swell","/home/we/dust/code/mx.samples/studies/swell.tmi",4)
 	  m:toggle_play()
 	end
   clock.run(redraw_clock) 

@@ -1,13 +1,13 @@
 # mx.samples
 
-digiment 
+mx.samples: like mr.coffee or mr.radar, but for samples
 
 
-this script provides an accessible way to utilize the vast trove of free instrument sample libraries. for instance, you can load in a piano with multiple dynamics and variations for any number of keys with release samples. 
+this script provides an accessible way to utilize the vast trove of free instrument sample libraries. for instance, you can load in a piano with multiple dynamics and variations and key release.
 
-this script handles the voices and the instruments dynamically, only loading into memory when needed so you can have gigabytes of samples and use only what you need in realtime.
+this script + supercollider engine handles the voices and the instruments dynamically - only loading into memory when needed so you can have gigabytes of samples and use only what you need in realtime. 
 
-a massive thank you to @zebra for helping me post-process the UofI piano samples - those samples were one of my main motivations for this script.
+a massive thank you to @zebra for helping me post-process the UofI piano samples - those samples were one of my main motivations for this script since i wanted the norns to be a piano sometimes.
 
 ## requirements
 
@@ -16,11 +16,17 @@ a massive thank you to @zebra for helping me post-process the UofI piano samples
 
 ## documentation
 
+### as a keyboard
+
+you can use *mx.samples* as a keyboard. just plugin your midi keyboard, open the script and choose a sample. samples are available to download (processed by me, you can process your own too - see below).
+
 ### as a library
 
-the api is pretty simple to include this into another script if you want a bunch of different voices. instruments are loaded dynamically so you can add as many as you want.
+the api is pretty simple to include this into another script if you want a bunch of different voices. (another goal here - to use with [tmi](https://llllllll.co/t/tmi/)). instruments are loaded dynamically so you can add as many as you want.
 
-syntax would be:
+see [study1.lua](https://github.com/schollz/mx.samples/blob/main/studies/study1.lua) for an example that uses [tmi](https://llllllll.co/t/tmi/) to do the sequencing.
+
+basically the syntax would be:
 
 ```lua
 mxsamples=include("mx.samples/lib/mx.samples")
@@ -46,7 +52,8 @@ skeys:on({
 	-- every parameter in the menu is available here
 })
 ```
-### samples
+
+### getting samples
 
 this script will allow you to download samples that i've already converted to use with it.
 

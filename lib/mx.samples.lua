@@ -235,7 +235,6 @@ function MxSamples:on(d)
 
   -- use spaes or undersores
   d.name=d.name:gsub(" ","_")
-  tab.print(d)
 
   if d.is_release==nil then
     d.is_release=false
@@ -348,8 +347,8 @@ function MxSamples:on(d)
 
   -- load sample if not loaded
   if sample_closest.buffer==-1 then
-    print("loading:")
-    tab.print(sample_closest)
+    -- print("loading:")
+    -- tab.print(sample_closest)
     self.instrument[d.name][sample_closest.i].buffer=self.buffer
     engine.mxsamplesload(self.buffer,sample_closest.filename)
     self.buffer=self.buffer+1
