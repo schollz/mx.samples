@@ -129,6 +129,9 @@ end
 function download(id)
   local url="https://github.com/schollz/mx.samples/releases/download/samples/"..id..".zip"
   local download_file=_path.code.."mx.samples/samples/"..id.."/download.zip"
+  cmd="mkdir -p ".._path.code.."mx.samples/samples/"..id
+  print(cmd)
+  os.execute(cmd)
   cmd="curl -L -o "..download_file.." "..url
   print(cmd)
   os.execute(cmd)
