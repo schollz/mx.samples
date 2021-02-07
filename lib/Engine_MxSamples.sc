@@ -1,12 +1,12 @@
-// Engine_Superkeys
+// Engine_MxSamples
 
 // Inherit methods from CroneEngine
-Engine_Superkeys : CroneEngine {
+Engine_MxSamples : CroneEngine {
 
-	// Superkeys specific
-	var sampleBuffSuperkeys;
-	var samplerPlayerSuperkeys;
-	// Superkeys ^
+	// MxSamples specific
+	var sampleBuffMxSamples;
+	var samplerPlayerMxSamples;
+	// MxSamples ^
 
 	*new { arg context, doneCallback;
 		^super.new(context, doneCallback);
@@ -14,7 +14,7 @@ Engine_Superkeys : CroneEngine {
 
 	alloc {
 
-		sampleBuffSuperkeys = Array.fill(200, { arg i; 
+		sampleBuffMxSamples = Array.fill(200, { arg i; 
 			Buffer.new(context.server);
 		});
 
@@ -60,22 +60,22 @@ Engine_Superkeys : CroneEngine {
 			}).add;	
 		});
 
-		samplerPlayerSuperkeys = Array.fill(14,{arg i;
+		samplerPlayerMxSamples = Array.fill(14,{arg i;
 			Synth("player"++i, target:context.xg);
 		});
 
-		this.addCommand("superkeysrelease","", { arg msg;
-			(0..199).do({arg i; sampleBuffSuperkeys[i].free});
+		this.addCommand("mxsamplesrelease","", { arg msg;
+			(0..199).do({arg i; sampleBuffMxSamples[i].free});
 		});
-		this.addCommand("superkeysload","is", { arg msg;
+		this.addCommand("mxsamplesload","is", { arg msg;
 			// lua is sending 0-index
-			sampleBuffSuperkeys[msg[1]].free;
-			sampleBuffSuperkeys[msg[1]] = Buffer.read(context.server,msg[2]);
+			sampleBuffMxSamples[msg[1]].free;
+			sampleBuffMxSamples[msg[1]] = Buffer.read(context.server,msg[2]);
 		});
 
-		this.addCommand("superkeyson","iifffffffffffff", { arg msg;
+		this.addCommand("mxsampleson","iifffffffffffff", { arg msg;
 			// lua is sending 1-index
-			samplerPlayerSuperkeys[msg[1]-1].set(
+			samplerPlayerMxSamples[msg[1]-1].set(
 				\t_trig,1,
 				\envgate,1,
 				\bufnum,msg[2],
@@ -95,9 +95,9 @@ Engine_Superkeys : CroneEngine {
 			);
 		});
 
-		this.addCommand("superkeysoff","i", { arg msg;
+		this.addCommand("mxsamplesoff","i", { arg msg;
 			// lua is sending 1-index
-			samplerPlayerSuperkeys[msg[1]-1].set(
+			samplerPlayerMxSamples[msg[1]-1].set(
 				\envgate,0,
 			);
 		});
@@ -105,7 +105,7 @@ Engine_Superkeys : CroneEngine {
 	}
 
 	free {
-		(0..199).do({arg i; sampleBuffSuperkeys[i].free});
-		(0..15).do({arg i; samplerPlayerSuperkeys[i].free});
+		(0..199).do({arg i; sampleBuffMxSamples[i].free});
+		(0..15).do({arg i; samplerPlayerMxSamples[i].free});
 	}
 }

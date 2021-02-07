@@ -4,7 +4,7 @@
 local MusicUtil=require "musicutil"
 local Formatters=require 'formatters'
 
-local Superkeys={}
+local MxSamples={}
 
 local VOICE_NUM=14
 
@@ -66,8 +66,8 @@ local function split_str(inputstr,sep)
   return t
 end
 
-function Superkeys:new(args)
-  local l=setmetatable({},{__index=Superkeys})
+function MxSamples:new(args)
+  local l=setmetatable({},{__index=MxSamples})
   local args=args==nil and {} or args
   l.instrument={} -- map instrument name to list of samples
   l.buffer=0
@@ -77,7 +77,7 @@ function Superkeys:new(args)
   end
 
   -- lets add files
-  local sample_folders=list_files(_path.code.."superkeys/samples/")
+  local sample_folders=list_files(_path.code.."mx.samples/samples/")
   for _,sample_folder_path in ipairs(sample_folders) do
     l:add_folder(sample_folder_path)
   end
@@ -97,89 +97,89 @@ function Superkeys:new(args)
   end
 
   -- add parameters
-  params:add_group("SUPERKEYS",16)
+  params:add_group("MX.SAMPLES",16)
   local filter_freq=controlspec.new(20,20000,'exp',0,20000,'Hz')
   params:add {
     type='control',
-    id="superkeys_amp",
+    id="mxsamples_amp",
     name="amp",
   controlspec=controlspec.new(0,10,'lin',0,1.0,'amp')}
   params:add {
     type='control',
-    id="superkeys_pan",
+    id="mxsamples_pan",
     name="pan",
   controlspec=controlspec.new(-1,1,'lin',0,0)}
   params:add {
     type='control',
-    id="superkeys_attack",
+    id="mxsamples_attack",
     name="attack",
   controlspec=controlspec.new(0,10,'lin',0,0,'s')}
   params:add {
     type='control',
-    id="superkeys_decay",
+    id="mxsamples_decay",
     name="decay",
   controlspec=controlspec.new(0,10,'lin',0,1,'s')}
   params:add {
     type='control',
-    id="superkeys_sustain",
+    id="mxsamples_sustain",
     name="sustain",
   controlspec=controlspec.new(0,2,'lin',0,0.9,'amp')}
   params:add {
     type='control',
-    id="superkeys_release",
+    id="mxsamples_release",
     name="release",
   controlspec=controlspec.new(0,10,'lin',0,2,'s')}
   params:add {
     type='control',
-    id="superkeys_tranpose_midi",
+    id="mxsamples_tranpose_midi",
     name="transpose midi",
   controlspec=controlspec.new(-24,24,'lin',0,0,'note',1/48)}
   params:add {
     type='control',
-    id="superkeys_tranpose_sample",
+    id="mxsamples_tranpose_sample",
     name="transpose sample",
   controlspec=controlspec.new(-24,24,'lin',0,0,'note',1/48)}
   params:add {
     type='control',
-    id="superkeys_tune",
+    id="mxsamples_tune",
     name="tune sample",
   controlspec=controlspec.new(-1,1,'lin',0,0,'%',1/1000)}
   params:add {
     type='control',
-    id='superkeys_lpf_superkeys',
+    id='mxsamples_lpf_mxsamples',
     name='low-pass filter',
     controlspec=filter_freq,
     formatter=Formatters.format_freq
   }
   params:add {
     type='control',
-    id='superkeys_hpf_superkeys',
+    id='mxsamples_hpf_mxsamples',
     name='high-pass filter',
     controlspec=controlspec.new(20,20000,'exp',0,20,'Hz'),
     formatter=Formatters.format_freq
   }
   params:add {
     type='control',
-    id="superkeys_delay_send",
+    id="mxsamples_delay_send",
     name="delay send",
   controlspec=controlspec.new(0,100,'lin',0,0,'%',1/100)}
   params:add {
     type='control',
-    id="superkeys_delay_times",
+    id="mxsamples_delay_times",
     name="delay iterations",
   controlspec=controlspec.new(0,100,'lin',0,0,'beats',1/100)}
-  params:add_option("superkeys_delay_rate","delay rate",delay_rates_names)
+  params:add_option("mxsamples_delay_rate","delay rate",delay_rates_names)
   params:add {
     type='control',
-    id="superkeys_play_release",
+    id="mxsamples_play_release",
     name="play release prob",
   controlspec=controlspec.new(0,100,'lin',0,50,'%',1/100)}
-  params:add_option("superkeys_scale_velocity","scale with velocity",{"off","on"})
+  params:add_option("mxsamples_scale_velocity","scale with velocity",{"off","on"})
 
   return l
 end
 
-function Superkeys:add_folder(sample_folder_path)
+function MxSamples:add_folder(sample_folder_path)
   _,sample_folder,_=string.match(sample_folder_path,"(.-)([^\\/]-%.?([^%.\\/]*))/$")
   -- make sure it doesn't exist 
   for _, instrument in ipairs(self.instrument) do 
@@ -209,7 +209,7 @@ function Superkeys:add_folder(sample_folder_path)
   return found_wav
 end
 
-function Superkeys:list_instruments()
+function MxSamples:list_instruments()
   local names = {}
   for _, instrument in ipairs(self.instrument) do
     table.insert(names,instrument.name)
@@ -218,7 +218,7 @@ function Superkeys:list_instruments()
   return names
 end
 
-function Superkeys:add(sample)
+function MxSamples:add(sample)
   -- {name="something", filename="~/piano_mf_c4.wav", midi=40, dynamic=1|2|3, dynamics=3, release=False/True, has_release=TBD, buffer=TBD}
   -- add sample to instrument
   sample.buffer=-1
@@ -229,7 +229,7 @@ function Superkeys:add(sample)
 end
 
 
-function Superkeys:on(d)
+function MxSamples:on(d)
   -- {name="piano",midi=40,velocity=60,is_release=True|False}
 
   -- use spaes or undersores
@@ -250,7 +250,7 @@ function Superkeys:on(d)
   end
 
   -- transpose midi before finding sample
-  d.midi=d.midi+params:get("superkeys_tranpose_midi")
+  d.midi=d.midi+params:get("mxsamples_tranpose_midi")
 
   -- find the sample that is closest to the midi
   -- with the specified dynamic
@@ -293,7 +293,7 @@ function Superkeys:on(d)
     -- play it from the engine
 
     -- compute pan (special for pianos!)
-    local pan=params:get("superkeys_pan")
+    local pan=params:get("mxsamples_pan")
     if string.find(d.name,"piano") then
       pan=util.linlin(21,108,-0.85,0.85,d.midi)
     end
@@ -303,14 +303,14 @@ function Superkeys:on(d)
     if d.is_release and rate==nil then
       rate=1
     elseif rate==nil then
-      rate=MusicUtil.note_num_to_freq(d.midi)/MusicUtil.note_num_to_freq(sample_closest_loaded.midi)*(MusicUtil.note_num_to_freq(d.midi+params:get("superkeys_tranpose_sample"))/MusicUtil.note_num_to_freq(d.midi))
+      rate=MusicUtil.note_num_to_freq(d.midi)/MusicUtil.note_num_to_freq(sample_closest_loaded.midi)*(MusicUtil.note_num_to_freq(d.midi+params:get("mxsamples_tranpose_sample"))/MusicUtil.note_num_to_freq(d.midi))
     end
-    rate = rate + (d.tune or params:get("superkeys_tune"))/10
+    rate = rate + (d.tune or params:get("mxsamples_tune"))/10
 
     -- compute amp
     -- multiply amp by velocity curve
-    local amp=params:get("superkeys_amp")
-    local scale_amp = params:get("superkeys_scale_velocity")==2
+    local amp=params:get("mxsamples_amp")
+    local scale_amp = params:get("mxsamples_scale_velocity")==2
     if d.scale_velocity ~= nil then 
       scale_amp = d.scale_velocity
     end
@@ -318,22 +318,22 @@ function Superkeys:on(d)
       amp = amp * d.velocity / 127 
     end
 
-    engine.superkeyson(
+    engine.mxsampleson(
       voice_i,
       sample_closest_loaded.buffer,
       rate,
       d.amp or amp,
       d.pan or pan,
-      d.attack or params:get("superkeys_attack"),
-      d.decay or params:get("superkeys_decay"),
-      d.sustain or params:get("superkeys_sustain"),
-      d.release or params:get("superkeys_release"),
-      d.lpf or params:get("superkeys_lpf_superkeys"),
-      d.hpf or params:get("superkeys_hpf_superkeys"),
+      d.attack or params:get("mxsamples_attack"),
+      d.decay or params:get("mxsamples_decay"),
+      d.sustain or params:get("mxsamples_sustain"),
+      d.release or params:get("mxsamples_release"),
+      d.lpf or params:get("mxsamples_lpf_mxsamples"),
+      d.hpf or params:get("mxsamples_hpf_mxsamples"),
       clock.get_beat_sec(),
-      d.delay or delay_rates[params:get("superkeys_delay_rate")],
-      d.delay_time or params:get("superkeys_delay_times")/100,
-      d.delay_send or params:get("superkeys_delay_send")/100
+      d.delay or delay_rates[params:get("mxsamples_delay_rate")],
+      d.delay_time or params:get("mxsamples_delay_times")/100,
+      d.delay_send or params:get("mxsamples_delay_send")/100
     )
   end
 
@@ -342,14 +342,14 @@ function Superkeys:on(d)
     print("loading:")
     tab.print(sample_closest)
     self.instrument[d.name][sample_closest.i].buffer=self.buffer
-    engine.superkeysload(self.buffer,sample_closest.filename)
+    engine.mxsamplesload(self.buffer,sample_closest.filename)
     self.buffer=self.buffer+1
   end
 
   return voice_i
 end
 
-function Superkeys:off(d)
+function MxSamples:off(d)
   -- {name="something", midi=40, is_release=True|False}
 
   -- use spaes or undersores
@@ -363,19 +363,19 @@ function Superkeys:off(d)
   for i,voice in ipairs(self.voice) do
     if voice.active.name==d.name and voice.active.midi==d.midi then
       -- this is the one!
-      print("superkeys: turning off "..d.name..":"..d.midi)
+      print("mxsamples: turning off "..d.name..":"..d.midi)
       self.voice[i].age=current_time()
       self.voice[i].active={name="",midi=0}
-      engine.superkeysoff(i)
+      engine.mxsamplesoff(i)
 
       -- add a release sound effect if its not a release
-      if self.instrument[d.name][1].has_release and math.random(100)<params:get("superkeys_play_release") then
+      if self.instrument[d.name][1].has_release and math.random(100)<params:get("mxsamples_play_release") then
         print("doing release!")
         local voice_i=self:on{name=d.name,is_release=true,midi=d.midi,variation=d.variation}
         clock.run(function()
           clock.sleep(0.5)
           self.voice[voice_i].active={name="",midi=0}
-          engine.superkeysoff(voice_i)
+          engine.mxsamplesoff(voice_i)
         end)
       end
       do return end
@@ -383,7 +383,7 @@ function Superkeys:off(d)
   end
 end
 
-function Superkeys:get_voice()
+function MxSamples:get_voice()
   -- gets voice based on the oldest that is not being used
   local oldest={i=0,age=current_time()}
   for i,voice in ipairs(self.voice) do
@@ -402,10 +402,10 @@ function Superkeys:get_voice()
   end
 
   -- turn off voice
-  engine.superkeysoff(oldest.i)
+  engine.mxsamplesoff(oldest.i)
   self.voice[oldest.i].age=current_time()
   return oldest.i
 end
 
 
-return Superkeys
+return MxSamples
