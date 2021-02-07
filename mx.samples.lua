@@ -65,7 +65,7 @@ function update_uilist()
     available_instruments[i].downloaded=downloaded
     available_instruments[i].active=(downloaded and i==instrument_current)
     if not downloaded then
-      s=s.." - get? ("..a.size.."MB)"
+      s=s.." - get?"
     end
     if available_instruments[i].active then
       s='> '..s..' <'
@@ -111,6 +111,7 @@ function key(k,z)
         redraw()
         clock.run(function()
           download(available_instruments[download_available].id)
+          instrument_current=download_available
           update_uilist()
           skeys:add_folder(_path.code.."mx.samples/samples/"..available_instruments[download_available].id.."/")
           download_available=0
@@ -149,8 +150,8 @@ function redraw()
     msg=UI.Message.new({"downloading",available_instruments[download_available].name,"please wait..."})
     msg:redraw()
   elseif download_available>0 then
-    local s=available_instruments[download_available].name..'('..available_instruments[download_available].size..')'
-    msg=UI.Message.new({"are you sure","you want to","download "..s.."?","k2 = no, k3 = yes"})
+    local s=available_instruments[download_available].name..' ('..available_instruments[download_available].size..' MB)'
+    msg=UI.Message.new({"are you sure you","want to download",s.."?","k2 = no, k3 = yes"})
     msg:redraw()
   else
     uilist:redraw()

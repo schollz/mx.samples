@@ -20,6 +20,8 @@ a massive thank you to @zebra for helping me post-process the UofI piano samples
 
 you can use *mx.samples* as a keyboard. just plugin your midi keyboard, open the script and choose a sample. samples are available to download (processed by me, you can process your own too - see below).
 
+_"warming" up the keyboard:_ the very first note you play will not "play" (known bug) because it is loading the sample. every subsequent *new* note will re-pitch the loaded sample *or it will load in a sample for that note* to be used the next time (so no latency from load). this means that you can get the best sound by playing the notes you want to play once before you play them.
+
 ### as a library
 
 the api is pretty simple to include this into another script if you want a bunch of different voices. (another goal here - to use with [tmi](https://llllllll.co/t/tmi/)). instruments are loaded dynamically so you can add as many as you want.
