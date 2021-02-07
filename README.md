@@ -4,7 +4,7 @@ mx.samples: like mr.coffee or mr.radar, but for instrument samples.
 
 https://vimeo.com/509450523
 
-this script provides an accessible way to utilize the vast trove of free instrument sample libraries.  for instance, you can load in a piano that has been sampled on multiple dynamics and variations and key releases.
+us as a keyboard instrument or in another script. *mx.samples* provides an accessible way to utilize the vast trove of free instrument sample libraries.  for instance, you can load in a piano that has been sampled on multiple dynamics and variations and key releases.
 
 the core of the script + supercollider engine handles the voices and the instruments. you can have unlimited samples on disk because samples are loaded dynamically - only loading into memory when needed (max 200 samples can be loaded though). no latency on loading because it will load in the background (and use the closest pitched sample in the meantime).
 
