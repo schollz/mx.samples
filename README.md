@@ -1,4 +1,4 @@
-# superkeys
+# mx.samples
 
 digiment 
 
@@ -23,9 +23,9 @@ the api is pretty simple to include this into another script if you want a bunch
 syntax would be:
 
 ```lua
-superkeys=include("superkeys/lib/superkeys")
-engine.name="Superkeys"
-skeys=superkeys:new()
+mxsamples=include("mx.samples/lib/mx.samples")
+engine.name="MxSamples"
+skeys=mxsamples:new()
 
 -- play an instrument
 skeys:on({name="ghost piano",midi=60,velocity=120})
@@ -50,7 +50,7 @@ skeys:on({
 
 this script will allow you to download samples that i've already converted to use with it.
 
-however, you can easily take any sample library and convert to use with superkeys. in the `samples/` folder there is a utility script `convert.py` that is specific to each type of sample and shows basically how its done (its easy).
+however, you can easily take any sample library and convert to use with mx.samples. in the `samples/` folder there is a utility script `convert.py` that is specific to each type of sample and shows basically how its done (its easy).
 
 the current samples are from the following sources, which are free and do not restrict to distributing them for this purpose:
 

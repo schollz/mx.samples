@@ -143,7 +143,7 @@ function MxSamples:new(args)
     type='control',
     id="mxsamples_tune",
     name="tune sample",
-  controlspec=controlspec.new(-1,1,'lin',0,0,'%',1/1000)}
+  controlspec=controlspec.new(-100,100,'lin',0,0,'cents',1/200)}
   params:add {
     type='control',
     id='mxsamples_lpf_mxsamples',
@@ -305,7 +305,11 @@ function MxSamples:on(d)
     elseif rate==nil then
       rate=MusicUtil.note_num_to_freq(d.midi)/MusicUtil.note_num_to_freq(sample_closest_loaded.midi)*(MusicUtil.note_num_to_freq(d.midi+params:get("mxsamples_tranpose_sample"))/MusicUtil.note_num_to_freq(d.midi))
     end
-    rate = rate + (d.tune or params:get("mxsamples_tune"))/10
+    local cents = d.tune 
+    if cents == nil then 
+      cents = params:get("mxsamples_tune")
+    end
+    rate = rate * (2^(cents/1200))
 
     -- compute amp
     -- multiply amp by velocity curve
