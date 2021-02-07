@@ -1,4 +1,4 @@
--- mx.samples v0.0.1
+-- mx.samples v0.0.2
 -- download and play samples
 --
 -- llllllll.co/t/mxsamples
@@ -136,6 +136,9 @@ function download(id)
   print(cmd)
   os.execute(cmd)
   cmd="unzip "..download_file.." -d ".._path.code.."mx.samples/samples/"..id.."/"
+  print(cmd)
+  os.execute(cmd)
+  cmd = "rm "..download_file
   print(cmd)
   os.execute(cmd)
 end
