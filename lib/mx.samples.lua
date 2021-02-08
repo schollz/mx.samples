@@ -307,7 +307,12 @@ function MxSamples:on(d)
       if transpose_sample == nil then 
         transpose_sample = params:get("mxsamples_transpose_sample")
       end
-      rate=MusicUtil.note_num_to_freq(d.midi)/MusicUtil.note_num_to_freq(sample_closest_loaded.midi)*(MusicUtil.note_num_to_freq(d.midi+transpose_sample)/MusicUtil.note_num_to_freq(d.midi))
+      local hz = d.hz or MusicUtil.note_num_to_freq(d.midi)
+      local hz_transpose = (MusicUtil.note_num_to_freq(d.midi+transpose_sample)/MusicUtil.note_num_to_freq(d.midi))
+      if d.hz ~= nil then 
+	      hz_transpose = 1
+      end
+      rate=hz/MusicUtil.note_num_to_freq(sample_closest_loaded.midi)*hz_transpose
     end
     local cents = d.tune 
     if cents == nil then 
