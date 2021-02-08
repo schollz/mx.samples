@@ -37,7 +37,6 @@ function init()
         if available_instruments[instrument_current].active~=true then
           do return end
         end
-        tab.print(data)
         if data[1]==144 then
           skeys:on({name=available_instruments[instrument_current].id,midi=data[2],velocity=data[3]})
         elseif data[1]==128 then
