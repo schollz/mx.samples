@@ -87,7 +87,7 @@ function MxSamples:new(args)
   for sample_name,samples in pairs(l.instrument) do
     local has_release=false
     for i,sample in ipairs(samples) do
-      if sample.release then
+      if sample.is_release then
         has_release=true
         break
       end
@@ -335,7 +335,6 @@ function MxSamples:on(d)
     if scale_amp then 
       amp = amp * d.velocity / 127 
     end
-
     engine.mxsampleson(
       voice_i,
       sample_closest_loaded.buffer,
@@ -391,11 +390,13 @@ function MxSamples:off(d)
       if self.instrument[d.name][1].has_release and math.random(100)<params:get("mxsamples_play_release") then
         print("doing release!")
         local voice_i=self:on{name=d.name,is_release=true,midi=d.midi,variation=d.variation}
-        clock.run(function()
-          clock.sleep(0.5)
-          self.voice[voice_i].active={name="",midi=0}
-          engine.mxsamplesoff(voice_i)
-        end)
+        if voice_i > 0 then 
+          clock.run(function()
+            clock.sleep(0.5)
+            self.voice[voice_i].active={name="",midi=0}
+            engine.mxsamplesoff(voice_i)
+          end)
+        end
       end
       do return end
     end
