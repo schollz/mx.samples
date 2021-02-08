@@ -98,7 +98,7 @@ function MxSamples:new(args)
   end
 
   -- add parameters
-  params:add_group("MX.SAMPLES",16)
+  params:add_group("MX.SAMPLES",17)
   local filter_freq=controlspec.new(20,20000,'exp',0,20000,'Hz')
   params:add {
     type='control',
@@ -170,6 +170,11 @@ function MxSamples:new(args)
     name="delay iterations",
   controlspec=controlspec.new(0,100,'lin',0,0,'beats',1/100)}
   params:add_option("mxsamples_delay_rate","delay rate",delay_rates_names)
+    params:add {
+    type='control',
+    id="mxsamples_sample_start",
+    name="sample start",
+  controlspec=controlspec.new(0,1000,'lin',0,0,'ms',1/1000)}
   params:add {
     type='control',
     id="mxsamples_play_release",
@@ -346,7 +351,8 @@ function MxSamples:on(d)
       clock.get_beat_sec(),
       d.delay_rate or delay_rates[params:get("mxsamples_delay_rate")],
       d.delay_times or params:get("mxsamples_delay_times")/100,
-      d.delay_send or params:get("mxsamples_delay_send")/100
+      d.delay_send or params:get("mxsamples_delay_send")/100,
+      d.sample_start or params:get("mxsamples_sample_start")
     )
   end
 

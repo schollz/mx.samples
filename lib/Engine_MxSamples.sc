@@ -41,7 +41,7 @@ Engine_MxSamples : CroneEngine {
 				
 				snd = PlayBuf.ar(2, bufnum,
 					rate:BufRateScale.kr(bufnum)*rate,
-				 	startPos: ((sampleStart*(rate>0))+(sampleEnd*(rate<0)))*BufFrames.kr(bufnum),
+				 	startPos: ((sampleEnd*(rate<0))*BufFrames.kr(bufnum))+(sampleStart/1000*48000),
 				 	trigger:t_trig,
 				);
 		        snd = LPF.ar(snd,lpf);
@@ -73,7 +73,7 @@ Engine_MxSamples : CroneEngine {
 			sampleBuffMxSamples[msg[1]] = Buffer.read(context.server,msg[2]);
 		});
 
-		this.addCommand("mxsampleson","iifffffffffffff", { arg msg;
+		this.addCommand("mxsampleson","iiffffffffffffff", { arg msg;
 			// lua is sending 1-index
 			samplerPlayerMxSamples[msg[1]-1].set(
 				\t_trig,1,
@@ -92,6 +92,7 @@ Engine_MxSamples : CroneEngine {
 				\delayBeats,msg[13],
 				\delayFeedback,msg[14],
 				\delaySend,msg[15],
+				\sampleStart,msg[16],
 			);
 		});
 
