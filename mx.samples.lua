@@ -46,6 +46,8 @@ function init()
     end
   end
 
+  print("available instruments: ")
+  tab.print(skeys:list_instruments())
   clock.run(redraw_clock) 
 end
 

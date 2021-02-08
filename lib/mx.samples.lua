@@ -183,8 +183,8 @@ end
 function MxSamples:add_folder(sample_folder_path)
   _,sample_folder,_=string.match(sample_folder_path,"(.-)([^\\/]-%.?([^%.\\/]*))/$")
   -- make sure it doesn't exist 
-  for _, instrument in ipairs(self.instrument) do 
-    if instrument.name==sample_folder then 
+  for name, _ in pairs(self.instrument) do 
+    if name==sample_folder then 
       do return end 
     end
   end
@@ -212,8 +212,8 @@ end
 
 function MxSamples:list_instruments()
   local names = {}
-  for _, instrument in ipairs(self.instrument) do
-    table.insert(names,instrument.name)
+  for name,_ in pairs(self.instrument) do
+    table.insert(names,name)
   end
   table.sort(names)
   return names
