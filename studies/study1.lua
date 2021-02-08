@@ -42,7 +42,7 @@ end
 
 function redraw()
   screen.clear()
-  msg=UI.Message.new({"study1:","mx.samples + tmi"})
+  msg=UI.Message.new({"study1: mx.samples + tmi","requires downloading","cello, alto sax choir","steinway model b,","and ghost piano"})
   if not util.file_exists(_path.code.."tmi") then 
 	  msg=UI.Message.new({"requires tmi","install tmi first"})
   end
