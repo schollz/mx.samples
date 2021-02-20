@@ -185,6 +185,18 @@ function MxSamples:new(args)
   return l
 end
 
+function MxSamples:reset()
+  for name,_ in pairs(self.instrument) do
+    for i,_ in ipairs(self.instrument[name]) do
+      self.instrument[name][i].buffer = -1 -- reset buffer info
+    end
+  end
+
+  for i,_ in ipairs(self.voice) do
+    self.voice[i]={age=current_time(),active={name="",midi=0}} -- reset voices
+  end
+end
+
 function MxSamples:add_folder(sample_folder_path)
   _,sample_folder,_=string.match(sample_folder_path,"(.-)([^\\/]-%.?([^%.\\/]*))/$")
   -- make sure it doesn't exist 
