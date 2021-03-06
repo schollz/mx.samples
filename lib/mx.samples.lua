@@ -70,6 +70,7 @@ end
 function MxSamples:new(args)
   local l=setmetatable({},{__index=MxSamples})
   local args=args==nil and {} or args
+  l.debug = args.debug
   l.instrument={} -- map instrument name to list of samples
   l.buffer=0
   l.voice={} -- list of voices and how hold they are
@@ -305,8 +306,9 @@ function MxSamples:on(d)
     -- assign the new voice
     voice_i=self:get_voice()
     self.voice[voice_i].active={name=d.name,midi=d.midi,i=sample_closest_loaded.i}
-    print("sample_closest_loaded: "..sample_closest_loaded.filename.." on voice "..voice_i)
-
+    if self.debug then
+      print("sample_closest_loaded: "..sample_closest_loaded.filename.." on voice "..voice_i)
+    end
     -- play it from the engine
 
     -- compute pan (special for pianos!)
@@ -393,14 +395,18 @@ function MxSamples:off(d)
   for i,voice in ipairs(self.voice) do
     if voice.active.name==d.name and voice.active.midi==d.midi then
       -- this is the one!
-      print("mxsamples: turning off "..d.name..":"..d.midi)
+      if self.debug then 
+        print("mxsamples: turning off "..d.name..":"..d.midi)
+      end
       self.voice[i].age=current_time()
       self.voice[i].active={name="",midi=0}
       engine.mxsamplesoff(i)
 
       -- add a release sound effect if its not a release
       if self.instrument[d.name][1].has_release and math.random(100)<params:get("mxsamples_play_release") then
-        print("doing release!")
+        if self.debug then 
+          print("doing release!")
+        end
         local voice_i=self:on{name=d.name,is_release=true,midi=d.midi,variation=d.variation}
         if voice_i > 0 then 
           clock.run(function()
