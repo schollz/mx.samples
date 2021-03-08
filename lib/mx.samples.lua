@@ -383,6 +383,10 @@ end
 
 function MxSamples:off(d)
   -- {name="something", midi=40, is_release=True|False}
+  if d.name == nil then 
+    print("mx.samples error (:off): no name!")
+    do return end
+  end
 
   -- use spaes or undersores
   d.name=d.name:gsub(" ","_")
