@@ -420,7 +420,6 @@ function MxSamples:off(d)
           end)
         end
       end
-      do return end
     end
   end
 end
@@ -429,6 +428,7 @@ function MxSamples:get_voice()
   -- gets voice based on the oldest that is not being used
   local oldest={i=0,age=current_time()}
   for i,voice in ipairs(self.voice) do
+    -- print(i,voice.active.midi)
     if voice.age<oldest.age and voice.active.midi==0 then
       oldest={i=i,age=voice.age}
     end
