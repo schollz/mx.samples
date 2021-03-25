@@ -180,7 +180,7 @@ function MxSamples:new(args)
     type='control',
     id="mxsamples_play_release",
     name="play release prob",
-  controlspec=controlspec.new(0,100,'lin',0,50,'%',1/100)}
+  controlspec=controlspec.new(0,100,'lin',0,0,'%',1/100)}
   params:add_option("mxsamples_scale_velocity","scale with velocity",{"off","on"})
 
   return l
