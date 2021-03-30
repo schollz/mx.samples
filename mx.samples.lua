@@ -21,6 +21,8 @@ available_instruments={
   {name="box violin",size=8*1.5},
   {name="cello",size=22*1.5},
   {name="cello pad",size=4*1.5},
+  {name="claus piano",size=616},
+  {name="claus piano wpedal",size=614},
   {name="dictaphone",size=18},
   {name="discord choir",size=18},
   {name="ghost piano",size=40*1.5},
