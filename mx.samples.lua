@@ -1,4 +1,4 @@
--- mx.samples v0.2.3
+-- mx.samples v0.3.0
 -- download and play samples
 --
 -- llllllll.co/t/mxsamples
@@ -44,7 +44,7 @@ function init()
           do return end
         end
         if (data[1]==144 or data[1]==128) then
-          tab.print(data)
+          -- tab.print(data)
           if data[1]==144 and data[3] > 0 then
             skeys:on({name=available_instruments[instrument_current].id,midi=data[2],velocity=data[3]})
           elseif data[1]==128 or data[3] == 0 then
