@@ -70,7 +70,7 @@ end
 function MxSamples:new(args)
   local l=setmetatable({},{__index=MxSamples})
   local args=args==nil and {} or args
-  l.debug = args.debug
+  l.debug = args.debug -- true --args.debug
   l.instrument={} -- map instrument name to list of samples
   l.buffer=0
   l.voice={} -- list of voices and how hold they are
