@@ -23,13 +23,20 @@ available_instruments={
   {name="cello pad",size=4*1.5},
   {name="claus piano",size=616},
   {name="claus piano wpedal",size=614},
+  {name="cow pad",size=61},
   {name="dictaphone",size=18},
   {name="discord choir",size=18},
+  {name="gentle vibes",size=206},
   {name="ghost piano",size=40*1.5},
   {name="harmonium",size=535},
   {name="kawai felt",size=62.8*2},
+  {name="music box",size=20},
+  {name="reverse piano",size=7},
   {name="steinway model b",size=128*1.5},
+  {name="string spurs",size=221},
+  {name="string spurs swells",size=31},
   {name="tatak piano",size=127*1.5},
+  {name="uilleann pipes",size=117},
 }
 
 function init()
