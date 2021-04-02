@@ -40,6 +40,10 @@ available_instruments={
 }
 
 function init()
+  cmd="mkdir -p ".._path.audio.."mx.samples/"
+  print(cmd)
+  os.execute(cmd)
+  
   skeys=mxsamples:new()
   update_uilist()
 
@@ -73,7 +77,7 @@ function update_uilist()
   items={}
   for i,a in ipairs(available_instruments) do
     available_instruments[i].id=string.gsub(a.name," ","_")
-    local files_for=os.capture("ls /home/we/dust/code/mx.samples/samples/"..available_instruments[i].id.."/*.wav")
+    local files_for=os.capture("ls /home/we/dust/audio/mx.samples/"..available_instruments[i].id.."/*.wav")
     local downloaded=false
     if string.find(files_for,".wav") then
       downloaded=true
@@ -130,7 +134,7 @@ function key(k,z)
           download(available_instruments[download_available].id)
           instrument_current=download_available
           update_uilist()
-          skeys:add_folder(_path.code.."mx.samples/samples/"..available_instruments[download_available].id.."/")
+          skeys:add_folder(_path.audio.."mx.samples/"..available_instruments[download_available].id.."/")
           download_available=0
           downloading=false
           redraw()
@@ -145,14 +149,14 @@ end
 
 function download(id)
   local url="https://github.com/schollz/mx.samples/releases/download/samples/"..id..".zip"
-  local download_file=_path.code.."mx.samples/samples/"..id.."/download.zip"
-  cmd="mkdir -p ".._path.code.."mx.samples/samples/"..id
+  local download_file=_path.audio.."mx.samples/"..id.."/download.zip"
+  cmd="mkdir -p ".._path.audio.."mx.samples/"..id
   print(cmd)
   os.execute(cmd)
   cmd="curl -L -o "..download_file.." "..url
   print(cmd)
   os.execute(cmd)
-  cmd="unzip "..download_file.." -d ".._path.code.."mx.samples/samples/"..id.."/"
+  cmd="unzip "..download_file.." -d ".._path.audio.."mx.samples/samples/"..id.."/"
   print(cmd)
   os.execute(cmd)
   cmd = "rm "..download_file
