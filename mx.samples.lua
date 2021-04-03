@@ -198,7 +198,7 @@ function download(id)
   cmd="curl -L -o "..download_file.." "..url
   print(cmd)
   os.execute(cmd)
-  cmd="unzip "..download_file.." -d ".._path.audio.."mx.samples/samples/"..id.."/"
+  cmd="unzip "..download_file.." -d ".._path.audio.."mx.samples/"..id.."/"
   print(cmd)
   os.execute(cmd)
   cmd = "rm "..download_file
