@@ -79,7 +79,7 @@ function MxSamples:new(args)
   end
 
   -- lets add files
-  local sample_folders=list_files(_path.code.."mx.samples/samples/")
+  local sample_folders=list_files(_path.audio.."mx.samples/")
   for _,sample_folder_path in ipairs(sample_folders) do
     l:add_folder(sample_folder_path)
   end

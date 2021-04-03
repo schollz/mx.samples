@@ -1,4 +1,4 @@
--- mx.samples v0.3.0
+-- mx.samples v1.0.0
 -- download and play samples
 --
 -- llllllll.co/t/mxsamples
@@ -40,32 +40,78 @@ available_instruments={
 }
 
 function init()
+  cmd="mkdir -p ".._path.audio.."mx.samples/"
+  print(cmd)
+  os.execute(cmd)
+  
   skeys=mxsamples:new()
   update_uilist()
 
-  for _,dev in pairs(midi.devices) do
-    if dev.port~=nil then
-      m=midi.connect(dev.port)
-      m.event=function(data)
-        if available_instruments[instrument_current].active~=true then
-          do return end
-        end
-        if (data[1]==144 or data[1]==128) then
-          -- tab.print(data)
-          if data[1]==144 and data[3] > 0 then
-            skeys:on({name=available_instruments[instrument_current].id,midi=data[2],velocity=data[3]})
-          elseif data[1]==128 or data[3] == 0 then
-            skeys:off({name=available_instruments[instrument_current].id,midi=data[2]})
-          end
-        end
-      end
-    end
-  end
+  setup_midi()
 
   print("available instruments: ")
   tab.print(skeys:list_instruments())
   clock.run(redraw_clock) 
 end
+
+
+function setup_midi()
+  -- get list of devices
+  local mididevice={}
+  local mididevice_list={"none"}
+  midi_channels={"all"}
+  for i=1,16 do
+    table.insert(midi_channels,i)
+  end
+  for _,dev in pairs(midi.devices) do
+    if dev.port~=nil then
+      local name=string.lower(dev.name)
+      table.insert(mididevice_list,name)
+      print("adding "..name.." to port "..dev.port)
+      mididevice[name]={
+        name=name,
+        port=dev.port,
+        midi=midi.connect(dev.port),
+        active=false,
+      }
+      mididevice[name].midi.event=function(data)
+        if mididevice[name].active==false then
+          do return end
+        end
+        local d=midi.to_msg(data)
+        --if d.type~="clock" then
+        --  tab.print(d)
+        --end
+        if d.ch~=midi_channels[params:get("midichannel")] and params:get("midichannel")>1 then
+          do return end
+        end
+        if d.type=="note_on" then
+          skeys:on({name=available_instruments[instrument_current].id,midi=data[2],velocity=data[3]})
+        elseif d.type=="note_off" then
+          skeys:off({name=available_instruments[instrument_current].id,midi=data[2]})
+        end
+      end
+    end
+  end
+  tab.print(mididevice_list)
+
+  params:add{type="option",id="midi",name="midi in",options=mididevice_list,default=1}
+  params:set_action("midi",function(v)
+    if v==1 then
+      do return end
+    end
+    for name,_ in pairs(mididevice) do
+      mididevice[name].active=false
+    end
+    mididevice[mididevice_list[v]].active=true
+  end)
+  params:add{type="option",id="midichannel",name="midi ch",options=midi_channels,default=1}
+
+  if #mididevice_list>1 then
+    params:set("midi",2)
+  end
+end
+
 
 function update_uilist()
   -- check if downloaded
@@ -73,7 +119,7 @@ function update_uilist()
   items={}
   for i,a in ipairs(available_instruments) do
     available_instruments[i].id=string.gsub(a.name," ","_")
-    local files_for=os.capture("ls /home/we/dust/code/mx.samples/samples/"..available_instruments[i].id.."/*.wav")
+    local files_for=os.capture("ls /home/we/dust/audio/mx.samples/"..available_instruments[i].id.."/*.wav")
     local downloaded=false
     if string.find(files_for,".wav") then
       downloaded=true
@@ -130,7 +176,7 @@ function key(k,z)
           download(available_instruments[download_available].id)
           instrument_current=download_available
           update_uilist()
-          skeys:add_folder(_path.code.."mx.samples/samples/"..available_instruments[download_available].id.."/")
+          skeys:add_folder(_path.audio.."mx.samples/"..available_instruments[download_available].id.."/")
           download_available=0
           downloading=false
           redraw()
@@ -145,14 +191,14 @@ end
 
 function download(id)
   local url="https://github.com/schollz/mx.samples/releases/download/samples/"..id..".zip"
-  local download_file=_path.code.."mx.samples/samples/"..id.."/download.zip"
-  cmd="mkdir -p ".._path.code.."mx.samples/samples/"..id
+  local download_file=_path.audio.."mx.samples/"..id.."/download.zip"
+  cmd="mkdir -p ".._path.audio.."mx.samples/"..id
   print(cmd)
   os.execute(cmd)
   cmd="curl -L -o "..download_file.." "..url
   print(cmd)
   os.execute(cmd)
-  cmd="unzip "..download_file.." -d ".._path.code.."mx.samples/samples/"..id.."/"
+  cmd="unzip "..download_file.." -d ".._path.audio.."mx.samples/"..id.."/"
   print(cmd)
   os.execute(cmd)
   cmd = "rm "..download_file
