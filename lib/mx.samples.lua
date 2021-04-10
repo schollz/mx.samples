@@ -6,8 +6,6 @@ local Formatters=require 'formatters'
 
 local MxSamples={}
 
-local VOICE_NUM=14
-
 local delay_rates_names={"whole-note","half-note","quarter note","eighth note","sixteenth note","thirtysecond"}
 local delay_rates={4,2,1,1/2,1/4,1/8,1/16}
 
@@ -70,11 +68,16 @@ end
 function MxSamples:new(args)
   local l=setmetatable({},{__index=MxSamples})
   local args=args==nil and {} or args
+  l.num_voices = args.num_voices or 40
+  if l.num_voices > 40 then 
+    l.num_voices = 40
+  end
   l.debug = args.debug -- true --args.debug
   l.instrument={} -- map instrument name to list of samples
   l.buffer=0
   l.voice={} -- list of voices and how hold they are
-  for i=1,VOICE_NUM do
+  engine.mxsamplesvoicenum(l.num_voices) -- release unused voices
+  for i=1,l.num_voices do
     l.voice[i]={age=current_time(),active={name="",midi=0}}
   end
 
