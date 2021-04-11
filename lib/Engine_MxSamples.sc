@@ -5,7 +5,9 @@ Engine_MxSamples : CroneEngine {
 
 	// MxSamples specific
 	var sampleBuffMxSamples;
+	var sampleBuffMxSamplesDelay;
 	var samplerPlayerMxSamples;
+	var mxsamplesVoices=30;
 	// MxSamples ^
 
 	*new { arg context, doneCallback;
@@ -14,13 +16,16 @@ Engine_MxSamples : CroneEngine {
 
 	alloc {
 
-		sampleBuffMxSamples = Array.fill(200, { arg i; 
+		sampleBuffMxSamples = Array.fill(100, { arg i; 
 			Buffer.new(context.server);
 		});
+		sampleBuffMxSamplesDelay = Array.fill(mxsamplesVoices, { arg i; 
+			Buffer.alloc(context.server,48000,5);
+		});
 
-		(0..15).do({arg i; 
+		(0..(mxsamplesVoices-1)).do({arg i; 
 			SynthDef("player"++i,{ 
-				arg bufnum, amp, t_trig=0,envgate=1,
+				arg bufnum,bufnumDelay, amp, t_trig=0,envgate=1,
 				attack=0.015,decay=1,release=2,sustain=0.9,
 				sampleStart=0,sampleEnd=1,rate=1,pan=0,
 				lpf=20000,hpf=10,
@@ -52,20 +57,32 @@ Engine_MxSamples : CroneEngine {
 				]);
 				snd = snd * amp * ender;
 		        snd = snd*0.5 +
-		        	((delaySend>0)*CombN.ar(
+		        	((delaySend>0)*BufCombN.ar(
+		        		bufnumDelay,
 		        		snd,
-						1,secondsPerBeat*delayBeats,secondsPerBeat*delayBeats*LinLin.kr(delayFeedback,0,1,2,128),0.5*delaySend // delayFeedback should vary between 2 and 128
+						secondsPerBeat*delayBeats,secondsPerBeat*delayBeats*LinLin.kr(delayFeedback,0,1,2,128),0.5*delaySend // delayFeedback should vary between 2 and 128
 					)); 
+					// delay w/ 30 voices = 1.5% (one core) per voice
+					// w/o delay w/ 30 voices = 1.1% (one core) per voice
 				Out.ar(0,snd)
 			}).add;	
 		});
 
-		samplerPlayerMxSamples = Array.fill(14,{arg i;
-			Synth("player"++i, target:context.xg);
+		samplerPlayerMxSamples = Array.fill(mxsamplesVoices,{arg i;
+			Synth("player"++i, [\bufnumDelay,sampleBuffMxSamplesDelay[i]],target:context.xg);
 		});
 
+		this.addCommand("mxsamplesvoicenum","i", { arg msg;
+			if (msg[1]<mxsamplesVoices,{
+				(msg[1]..(mxsamplesVoices-1)).do({arg i;
+					samplerPlayerMxSamples[i].free;
+				});
+			},{});
+		});
+
+
 		this.addCommand("mxsamplesrelease","", { arg msg;
-			(0..199).do({arg i; sampleBuffMxSamples[i].free});
+			(0..99).do({arg i; sampleBuffMxSamples[i].free});
 		});
 		this.addCommand("mxsamplesload","is", { arg msg;
 			// lua is sending 0-index
@@ -106,7 +123,7 @@ Engine_MxSamples : CroneEngine {
 	}
 
 	free {
-		(0..199).do({arg i; sampleBuffMxSamples[i].free});
-		(0..15).do({arg i; samplerPlayerMxSamples[i].free});
+		(0..99).do({arg i; sampleBuffMxSamples[i].free});
+		(0..(mxsamplesVoices-1)).do({arg i; samplerPlayerMxSamples[i].free});
 	}
 }

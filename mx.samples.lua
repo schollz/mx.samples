@@ -1,4 +1,4 @@
--- mx.samples v1.0.0
+-- mx.samples v1.1.0
 -- download and play samples
 --
 -- llllllll.co/t/mxsamples
@@ -48,7 +48,7 @@ function init()
   print(cmd)
   os.execute(cmd)
   
-  skeys=mxsamples:new()
+  skeys=mxsamples:new({num_voices=40})
   update_uilist()
 
   setup_midi()
