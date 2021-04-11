@@ -6,6 +6,7 @@ local Formatters=require 'formatters'
 
 local MxSamples={}
 
+local MaxVoices=40
 local delay_rates_names={"whole-note","half-note","quarter note","eighth note","sixteenth note","thirtysecond"}
 local delay_rates={4,2,1,1/2,1/4,1/8,1/16}
 
@@ -68,16 +69,11 @@ end
 function MxSamples:new(args)
   local l=setmetatable({},{__index=MxSamples})
   local args=args==nil and {} or args
-  l.num_voices = args.num_voices or 40
-  if l.num_voices > 40 then 
-    l.num_voices = 40
-  end
   l.debug = args.debug -- true --args.debug
   l.instrument={} -- map instrument name to list of samples
   l.buffer=0
   l.voice={} -- list of voices and how hold they are
-  engine.mxsamplesvoicenum(l.num_voices) -- release unused voices
-  for i=1,l.num_voices do
+  for i=1,MaxVoices do -- initiate with 40 voices
     l.voice[i]={age=current_time(),active={name="",midi=0}}
   end
 
@@ -187,6 +183,15 @@ function MxSamples:new(args)
   params:add_option("mxsamples_scale_velocity","scale with velocity",{"off","on"})
 
   return l
+end
+
+function MxSamples:max_voices(num_voices)
+  if num_voices < MaxVoices then
+    engine.mxsamplesvoicenum(num_voices) -- release unused voices
+    for i=num_voices,MaxVoices do 
+      self.voice[i]=nil
+    end
+  end
 end
 
 function MxSamples:reset()
