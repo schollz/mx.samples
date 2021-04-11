@@ -389,7 +389,7 @@ function MxSamples:on(d)
     self.buffers_used[self.buffer]={name=d.name,i=sample_closest.i}
     engine.mxsamplesload(self.buffer,sample_closest.filename)
     self.buffer=self.buffer+1
-    if self.buffer > 99 then
+    if self.buffer > 79 then
       self.buffer = 0
     end
     -- if this next buffer is being used, get it ready to be overridden

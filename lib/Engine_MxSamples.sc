@@ -16,11 +16,11 @@ Engine_MxSamples : CroneEngine {
 
 	alloc {
 
-		sampleBuffMxSamples = Array.fill(100, { arg i; 
+		sampleBuffMxSamples = Array.fill(80, { arg i; 
 			Buffer.new(context.server);
 		});
 		sampleBuffMxSamplesDelay = Array.fill(mxsamplesVoices, { arg i; 
-			Buffer.alloc(context.server,48000,5);
+			Buffer.alloc(context.server,48000,2);
 		});
 
 		(0..(mxsamplesVoices-1)).do({arg i; 
@@ -82,7 +82,7 @@ Engine_MxSamples : CroneEngine {
 
 
 		this.addCommand("mxsamplesrelease","", { arg msg;
-			(0..99).do({arg i; sampleBuffMxSamples[i].free});
+			(0..79).do({arg i; sampleBuffMxSamples[i].free});
 		});
 		this.addCommand("mxsamplesload","is", { arg msg;
 			// lua is sending 0-index
@@ -123,7 +123,7 @@ Engine_MxSamples : CroneEngine {
 	}
 
 	free {
-		(0..99).do({arg i; sampleBuffMxSamples[i].free});
+		(0..79).do({arg i; sampleBuffMxSamples[i].free});
 		(0..(mxsamplesVoices-1)).do({arg i; samplerPlayerMxSamples[i].free});
 	}
 }
