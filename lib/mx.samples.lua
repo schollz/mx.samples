@@ -6,7 +6,7 @@ local Formatters=require 'formatters'
 
 local MxSamples={}
 
-local MaxVoices=40
+local MaxVoices=30
 local delay_rates_names={"whole-note","half-note","quarter note","eighth note","sixteenth note","thirtysecond"}
 local delay_rates={4,2,1,1/2,1/4,1/8,1/16}
 
@@ -69,8 +69,9 @@ end
 function MxSamples:new(args)
   local l=setmetatable({},{__index=MxSamples})
   local args=args==nil and {} or args
-  l.debug = args.debug -- true --args.debug
+  l.debug = args.debug --true-- args.debug -- true --args.debug
   l.instrument={} -- map instrument name to list of samples
+  l.buffers_used={} -- map buffer number to data
   l.buffer=0
   l.voice={} -- list of voices and how hold they are
   for i=1,MaxVoices do -- initiate with 40 voices
@@ -381,9 +382,20 @@ function MxSamples:on(d)
   if sample_closest.buffer==-1 then
     -- print("loading:")
     -- tab.print(sample_closest)
+    if self.debug then
+      print("loading "..d.name.." "..sample_closest.i.." into buffer "..self.buffer)
+    end
     self.instrument[d.name][sample_closest.i].buffer=self.buffer
+    self.buffers_used[self.buffer]={name=d.name,i=sample_closest.i}
     engine.mxsamplesload(self.buffer,sample_closest.filename)
     self.buffer=self.buffer+1
+    if self.buffer > 99 then
+      self.buffer = 0
+    end
+    -- if this next buffer is being used, get it ready to be overridden
+    if self.buffers_used[self.buffer] ~= nil then 
+      self.instrument[self.buffers_used[self.buffer].name][self.buffers_used[self.buffer].i].buffer=-1      
+    end
   end
 
   return voice_i
