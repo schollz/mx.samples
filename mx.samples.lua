@@ -48,7 +48,7 @@ function init()
   print(cmd)
   os.execute(cmd)
   
-  skeys=mxsamples:new({num_voices=40})
+  skeys=mxsamples:new()
   update_uilist()
 
   setup_midi()
