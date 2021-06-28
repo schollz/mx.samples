@@ -49,7 +49,7 @@ function init()
   cmd="mkdir -p ".._path.audio.."mx.samples/"
   print(cmd)
   os.execute(cmd)
-  
+
   skeys=mxsamples:new()
   update_uilist()
 
@@ -57,7 +57,7 @@ function init()
 
   print("available instruments: ")
   tab.print(skeys:list_instruments())
-  clock.run(redraw_clock) 
+  clock.run(redraw_clock)
 end
 
 
@@ -143,9 +143,9 @@ function update_uilist()
     end
     table.insert(items,s)
   end
-  local index = 1
-  if uilist ~= nil then 
-    index = uilist.index 
+  local index=1
+  if uilist~=nil then
+    index=uilist.index
   end
   uilist=UI.ScrollingList.new(0,0,index,items)
 end
@@ -207,7 +207,7 @@ function download(id)
   cmd="unzip "..download_file.." -d ".._path.audio.."mx.samples/"..id.."/"
   print(cmd)
   os.execute(cmd)
-  cmd = "rm "..download_file
+  cmd="rm "..download_file
   print(cmd)
   os.execute(cmd)
 end
