@@ -19,6 +19,7 @@ Engine_MxSamples : CroneEngine {
 		mxosc = OSCFunc({ 
             		arg msg, time; 
              		[time, msg].postln;
+			NetAddr("127.0.0.1", 10111).sendMsg("voice",msg[2],msg[3]);
 		},'/tr', s.addr);
 
 		mxsamplesVoiceAlloc=Dictionary.new(n=mxsamplesMaxVoices);
@@ -33,7 +34,7 @@ Engine_MxSamples : CroneEngine {
 		});
 
 		SynthDef("mxPlayer",{ 
-				arg bufnum,bufnumDelay, amp, t_trig=0,envgate=1,
+				arg bufnum,bufnumDelay, amp, t_trig=0,envgate=1,name=1,
 				attack=0.015,decay=1,release=2,sustain=0.9,
 				sampleStart=0,sampleEnd=1,rate=1,pan=0,
 				lpf=20000,hpf=10,
@@ -72,6 +73,7 @@ Engine_MxSamples : CroneEngine {
 					)); 
 					// delay w/ 30 voices = 1.5% (one core) per voice
 					// w/o delay w/ 30 voices = 1.1% (one core) per voice
+				SendTrig.kr(Impulse.kr(1),name,1);
 				DetectSilence(snd,doneAction:2);
 				Out.ar(0,snd)
 		}).add;	
@@ -87,6 +89,11 @@ Engine_MxSamples : CroneEngine {
 
 		this.addCommand("mxsampleson","iiffffffffffffff", { arg msg;
 			var name=msg[1];
+			if (mxsamplesVoiceAlloc.at(name)!=nil,{
+				if (mxsamplesVoiceAlloc.at(name).isRunning==true,{
+					mxsamplesVoiceAlloc.at(name).free;
+				});
+			});
 			mxsamplesVoiceAlloc.put(name,
 				Synth("player",[
 				\bufnumDelay,sampleBuffMxSamplesDelay[i]],
@@ -106,7 +113,11 @@ Engine_MxSamples : CroneEngine {
 				\delayBeats,msg[13],
 				\delayFeedback,msg[14],
 				\delaySend,msg[15],
-				\sampleStart,msg[16] ],target:context.xg);
+				\sampleStart,msg[16] ],target:context.xg)
+				.onFree({
+					("freed "++name).postln;
+					NetAddr("127.0.0.1", 10111).sendMsg("voice",name,0);
+				});
 			);
 			NodeWatcher.register(d.at(name));
 		});
