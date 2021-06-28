@@ -74,6 +74,7 @@ function MxSamples:new(args)
   l.buffers_used={} -- map buffer number to data
   l.buffer=0
   l.voice={} -- list of voices and how hold they are
+  l.voice_last=1
   for i=1,MaxVoices do -- initiate with 40 voices
     l.voice[i]={age=current_time(),active={name="",midi=0}}
   end
@@ -182,6 +183,10 @@ function MxSamples:new(args)
     name="play release prob",
   controlspec=controlspec.new(0,100,'lin',0,0,'%',1/100)}
   params:add_option("mxsamples_scale_velocity","scale with velocity",{"off","on"})
+
+osc.event=function(path,args,from)
+   -- l.voice[args[1]].sc_pos=args[2]
+end  
 
   return l
 end
