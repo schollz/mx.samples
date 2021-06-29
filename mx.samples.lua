@@ -1,4 +1,4 @@
--- mx.samples v1.2.0
+-- mx.samples v1.3.0
 -- download and play samples
 --
 -- llllllll.co/t/mxsamples
@@ -49,15 +49,28 @@ function init()
   cmd="mkdir -p ".._path.audio.."mx.samples/"
   print(cmd)
   os.execute(cmd)
-  
+
   skeys=mxsamples:new()
   update_uilist()
 
   setup_midi()
 
+  local f=io.open(_path.data.."mx.samples/last","rb")
+  if f~=nil then
+    local content=f:read("*all")
+    f:close()
+    local last_instrument_current = tonumber(content)
+    if last_instrument_current ~= nil then
+      instrument_current=last_instrument_current
+      uilist.index=instrument_current
+      update_uilist()
+    end
+  end
+
+
   print("available instruments: ")
   tab.print(skeys:list_instruments())
-  clock.run(redraw_clock) 
+  clock.run(redraw_clock)
 end
 
 
@@ -143,9 +156,9 @@ function update_uilist()
     end
     table.insert(items,s)
   end
-  local index = 1
-  if uilist ~= nil then 
-    index = uilist.index 
+  local index=1
+  if uilist~=nil then
+    index=uilist.index
   end
   uilist=UI.ScrollingList.new(0,0,index,items)
 end
@@ -170,6 +183,9 @@ function key(k,z)
     local i=uilist.index
     if available_instruments[i].downloaded then
       instrument_current=i
+      f=io.open(_path.data.."mx.samples/last","w")
+      f:write(instrument_current)
+      f:close()
       update_uilist()
     elseif download_available>0 then
       if k==2 then
@@ -207,14 +223,14 @@ function download(id)
   cmd="unzip "..download_file.." -d ".._path.audio.."mx.samples/"..id.."/"
   print(cmd)
   os.execute(cmd)
-  cmd = "rm "..download_file
+  cmd="rm "..download_file
   print(cmd)
   os.execute(cmd)
 end
 
 function redraw_clock() -- our grid redraw clock
   while true do -- while it's running...
-    clock.sleep(1/30) -- refresh
+    clock.sleep(1/10) -- refresh
     redraw()
   end
 end
