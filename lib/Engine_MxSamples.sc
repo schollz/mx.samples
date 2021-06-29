@@ -6,7 +6,7 @@ Engine_MxSamples : CroneEngine {
 	// MxSamples specific
 	var sampleBuffMxSamples;
 	var sampleBuffMxSamplesDelay;
-	var mxsamplesMaxVoices=30;
+	var mxsamplesMaxVoices=40;
     var mxsamplesVoiceAlloc;
 	// MxSamples ^
 
@@ -119,9 +119,14 @@ Engine_MxSamples : CroneEngine {
 
 		this.addCommand("mxsamplesoff","i", { arg msg;
 			// lua is sending 1-index
-			mxsamplesVoiceAlloc.at(msg[1]).set(
-				\envgate,0,
-			);
+			var name=msg[1];
+			if (mxsamplesVoiceAlloc.at(name)!=nil,{
+				if (mxsamplesVoiceAlloc.at(name).isRunning==true,{
+					mxsamplesVoiceAlloc.at(name).set(
+						\envgate,0,
+					);
+				});
+			});
 		});
 
 	}

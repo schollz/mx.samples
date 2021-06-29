@@ -6,7 +6,7 @@ local Formatters=require 'formatters'
 
 local MxSamples={}
 
-local MaxVoices=30
+local MaxVoices=40
 local delay_rates_names={"whole-note","half-note","quarter note","eighth note","sixteenth note","thirtysecond"}
 local delay_rates={4,2,1,1/2,1/4,1/8,1/16}
 
