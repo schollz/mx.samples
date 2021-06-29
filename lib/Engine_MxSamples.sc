@@ -96,7 +96,7 @@ Engine_MxSamples : CroneEngine {
 			});
 			mxsamplesVoiceAlloc.put(name,
 				Synth("player",[
-				\bufnumDelay,sampleBuffMxSamplesDelay[i]],
+				\bufnumDelay,sampleBuffMxSamplesDelay[i],
 				\t_trig,1,
 				\envgate,1,
 				\bufnum,msg[2],
@@ -113,8 +113,7 @@ Engine_MxSamples : CroneEngine {
 				\delayBeats,msg[13],
 				\delayFeedback,msg[14],
 				\delaySend,msg[15],
-				\sampleStart,msg[16] ],target:context.xg)
-				.onFree({
+				\sampleStart,msg[16] ],target:context.server).onFree({
 					("freed "++name).postln;
 					NetAddr("127.0.0.1", 10111).sendMsg("voice",name,0);
 				});
