@@ -184,9 +184,16 @@ function MxSamples:new(args)
   controlspec=controlspec.new(0,100,'lin',0,0,'%',1/100)}
   params:add_option("mxsamples_scale_velocity","scale with velocity",{"off","on"})
 
-osc.event=function(path,args,from)
-   -- l.voice[args[1]].sc_pos=args[2]
-end  
+  osc.event=function(path,args,from)
+    if path=="voice" then 
+      local voice_num=args[1]
+      local onoff=args[2]
+      if onoff==0 then
+        self.voice[voice_num].age=current_time()
+        self.voice[voice_num].active={name="",midi=0}
+      end
+    end
+  end  
 
   return l
 end
@@ -427,8 +434,6 @@ function MxSamples:off(d)
       if self.debug then 
         print("mxsamples: turning off "..d.name..":"..d.midi)
       end
-      self.voice[i].age=current_time()
-      self.voice[i].active={name="",midi=0}
       engine.mxsamplesoff(i)
 
       -- add a release sound effect if its not a release
@@ -440,7 +445,6 @@ function MxSamples:off(d)
         if voice_i > 0 then 
           clock.run(function()
             clock.sleep(0.5)
-            self.voice[voice_i].active={name="",midi=0}
             engine.mxsamplesoff(voice_i)
           end)
         end

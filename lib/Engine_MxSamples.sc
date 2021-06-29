@@ -7,7 +7,7 @@ Engine_MxSamples : CroneEngine {
 	var sampleBuffMxSamples;
 	var sampleBuffMxSamplesDelay;
 	var mxsamplesMaxVoices=30;
-        var mxsamplesVoiceAlloc;
+    var mxsamplesVoiceAlloc;
 	var mxosc;
 	// MxSamples ^
 
@@ -20,9 +20,9 @@ Engine_MxSamples : CroneEngine {
             		arg msg, time; 
              		[time, msg].postln;
 			NetAddr("127.0.0.1", 10111).sendMsg("voice",msg[2],msg[3]);
-		},'/tr', s.addr);
+		},'/tr', context.server.addr);
 
-		mxsamplesVoiceAlloc=Dictionary.new(n=mxsamplesMaxVoices);
+		mxsamplesVoiceAlloc=Dictionary.new(mxsamplesMaxVoices);
 
 		context.server.sync;
 
@@ -73,8 +73,8 @@ Engine_MxSamples : CroneEngine {
 					)); 
 					// delay w/ 30 voices = 1.5% (one core) per voice
 					// w/o delay w/ 30 voices = 1.1% (one core) per voice
-				SendTrig.kr(Impulse.kr(1),name,1);
-				DetectSilence(snd,doneAction:2);
+				// SendTrig.kr(Impulse.kr(1),name,1);
+				DetectSilence.ar(snd,doneAction:2);
 				Out.ar(0,snd)
 		}).add;	
 
@@ -91,12 +91,13 @@ Engine_MxSamples : CroneEngine {
 			var name=msg[1];
 			if (mxsamplesVoiceAlloc.at(name)!=nil,{
 				if (mxsamplesVoiceAlloc.at(name).isRunning==true,{
+					("stealing "++name).postln;
 					mxsamplesVoiceAlloc.at(name).free;
 				});
 			});
 			mxsamplesVoiceAlloc.put(name,
-				Synth("player",[
-				\bufnumDelay,sampleBuffMxSamplesDelay[i],
+				Synth("mxPlayer",[
+				\bufnumDelay,sampleBuffMxSamplesDelay[msg[1]-1],
 				\t_trig,1,
 				\envgate,1,
 				\bufnum,msg[2],
@@ -118,12 +119,12 @@ Engine_MxSamples : CroneEngine {
 					NetAddr("127.0.0.1", 10111).sendMsg("voice",name,0);
 				});
 			);
-			NodeWatcher.register(d.at(name));
+			NodeWatcher.register(mxsamplesVoiceAlloc.at(name));
 		});
 
 		this.addCommand("mxsamplesoff","i", { arg msg;
 			// lua is sending 1-index
-			d.at(name).set(
+			mxsamplesVoiceAlloc.at(msg[1]).set(
 				\envgate,0,
 			);
 		});
