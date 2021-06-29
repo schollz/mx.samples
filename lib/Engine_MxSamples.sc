@@ -8,7 +8,6 @@ Engine_MxSamples : CroneEngine {
 	var sampleBuffMxSamplesDelay;
 	var mxsamplesMaxVoices=30;
     var mxsamplesVoiceAlloc;
-	var mxosc;
 	// MxSamples ^
 
 	*new { arg context, doneCallback;
@@ -16,12 +15,6 @@ Engine_MxSamples : CroneEngine {
 	}
 
 	alloc {
-		mxosc = OSCFunc({ 
-            		arg msg, time; 
-             		[time, msg].postln;
-			NetAddr("127.0.0.1", 10111).sendMsg("voice",msg[2],msg[3]);
-		},'/tr', context.server.addr);
-
 		mxsamplesVoiceAlloc=Dictionary.new(mxsamplesMaxVoices);
 
 		context.server.sync;
@@ -75,6 +68,8 @@ Engine_MxSamples : CroneEngine {
 					// w/o delay w/ 30 voices = 1.1% (one core) per voice
 				// SendTrig.kr(Impulse.kr(1),name,1);
 				DetectSilence.ar(snd,doneAction:2);
+				// just in case, release after 1 minute
+				FreeSelf.kr(TDelay.kr(DC.kr(1),60));
 				Out.ar(0,snd)
 		}).add;	
 
@@ -133,5 +128,7 @@ Engine_MxSamples : CroneEngine {
 
 	free {
 		(0..79).do({arg i; sampleBuffMxSamples[i].free});
+		(mxsamplesMaxVoices).do({arg i; sampleBuffMxSamplesDelay[i].free;});
+    	mxsamplesVoiceAlloc.keysValuesDo({ arg key, value; value.free; });
 	}
 }

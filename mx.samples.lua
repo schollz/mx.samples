@@ -55,6 +55,19 @@ function init()
 
   setup_midi()
 
+  local f=io.open(_path.data.."mx.samples/last","rb")
+  if f~=nil then
+    local content=f:read("*all")
+    f:close()
+    local last_instrument_current = tonumber(content)
+    if last_instrument_current ~= nil then
+      instrument_current=last_instrument_current
+      uilist.index=instrument_current
+      update_uilist()
+    end
+  end
+
+
   print("available instruments: ")
   tab.print(skeys:list_instruments())
   clock.run(redraw_clock)
@@ -170,6 +183,9 @@ function key(k,z)
     local i=uilist.index
     if available_instruments[i].downloaded then
       instrument_current=i
+      f=io.open(_path.data.."mx.samples/last","w")
+      f:write(instrument_current)
+      f:close()
       update_uilist()
     elseif download_available>0 then
       if k==2 then
@@ -214,7 +230,7 @@ end
 
 function redraw_clock() -- our grid redraw clock
   while true do -- while it's running...
-    clock.sleep(1/30) -- refresh
+    clock.sleep(1/10) -- refresh
     redraw()
   end
 end

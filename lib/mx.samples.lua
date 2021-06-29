@@ -188,9 +188,9 @@ function MxSamples:new(args)
     if path=="voice" then 
       local voice_num=args[1]
       local onoff=args[2]
-      if onoff==0 then
-        self.voice[voice_num].age=current_time()
-        self.voice[voice_num].active={name="",midi=0}
+      if onoff==0 and voice_num~=nil then
+        l.voice[voice_num].age=current_time()
+        l.voice[voice_num].active={name="",midi=0}
       end
     end
   end  
