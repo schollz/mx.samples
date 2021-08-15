@@ -27,6 +27,9 @@ available_instruments={
   {name="dictaphone",size=18},
   {name="discord choir",size=18},
   {name="doom drone",size=47},
+  {name="drums acoustic",size=31*1.5},
+  {name="drums snapping",size=1.5},
+  {name="drums violin",size=5},
   {name="dyn evo choir slow",size=288*1.5},
   {name="dyn evo choir fast",size=172*1.5},
   {name="epiano dx7",size=15},
@@ -74,20 +77,18 @@ function init()
   if f~=nil then
     local content=f:read("*all")
     f:close()
-    local last_instrument_current = tonumber(content)
-    if last_instrument_current ~= nil then
+    local last_instrument_current=tonumber(content)
+    if last_instrument_current~=nil then
       instrument_current=last_instrument_current
       uilist.index=instrument_current
       update_uilist()
     end
   end
 
-
   print("available instruments: ")
   tab.print(skeys:list_instruments())
   clock.run(redraw_clock)
 end
-
 
 function setup_midi()
   -- get list of devices
@@ -145,7 +146,6 @@ function setup_midi()
     params:set("midi",2)
   end
 end
-
 
 function update_uilist()
   -- check if downloaded
@@ -224,7 +224,6 @@ function key(k,z)
     end
   end
 end
-
 
 function download(id)
   local url="https://github.com/schollz/mx.samples/releases/download/samples/"..id..".zip"
