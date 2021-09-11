@@ -3,7 +3,7 @@
 // Inherit methods from CroneEngine
 Engine_MxSamples : CroneEngine {
 
-	// MxSamples specific
+	// <mxsamples>
 	var sampleBuffMxSamples;
 	var sampleBuffMxSamplesDelay;
 	var mxsamplesMaxVoices=40;
@@ -11,7 +11,7 @@ Engine_MxSamples : CroneEngine {
     var mxsamplesFX;
     var mxsamplesBusDelay;
     var mxsamplesBusReverb;
-	// MxSamples ^
+	// </mxsamples>
 
 	*new { arg context, doneCallback;
 		^super.new(context, doneCallback);
@@ -28,15 +28,22 @@ Engine_MxSamples : CroneEngine {
 		sampleBuffMxSamplesDelay = Buffer.alloc(context.server,48000,2);
 
 		SynthDef("mxfx",{ 
-			arg inDelay, inReverb, reverb=0.03, out, secondsPerBeat=1,delayBeats=8,feedback=1,bufnumDelay;
-			var snd,snd2;
+			arg inDelay, inReverb, reverb=0.05, out, secondsPerBeat=1,delayBeats=8,delayFeedback=1,bufnumDelay;
+			var snd,snd2,y,z;
 
 			// delay
 			snd = In.ar(inDelay,2);
-			snd = BufCombN.ar(
-        		bufnumDelay,
+			// snd = BufCombC.ar(
+   //      		bufnumDelay,
+   //      		snd,
+			// 	secondsPerBeat*delayBeats,
+			// 	secondsPerBeat*delayBeats*LinLin.kr(delayFeedback,0,1,2,128),// delayFeedback should vary between 2 and 128
+			// ); 
+			snd = CombC.ar(
         		snd,
-				secondsPerBeat*delayBeats,secondsPerBeat*delayBeats*LinLin.kr(feedback,0,1,2,128),// delayFeedback should vary between 2 and 128
+        		2,
+				secondsPerBeat*delayBeats,
+				secondsPerBeat*delayBeats*LinLin.kr(delayFeedback,0,1,2,128),// delayFeedback should vary between 2 and 128
 			); 
 			Out.ar(out,snd);
 
@@ -49,7 +56,7 @@ Engine_MxSamples : CroneEngine {
 			// two parallel chains of 4 allpass delays (8 total) :
 			4.do({ y = AllpassN.ar(y, 0.050, [0.050.rand, 0.050.rand], 1) });
 			// add original sound to reverb and play it :
-			snd2=snd2+(reverb*y);
+			snd2=y;
 			snd2=HPF.ar(snd2,20);
 			Out.ar(out,snd2);
 		}).add;
@@ -100,7 +107,7 @@ Engine_MxSamples : CroneEngine {
 		mxsamplesBusDelay = Bus.audio(context.server,2);
 		mxsamplesBusReverb = Bus.audio(context.server,2);
 		context.server.sync;
-		mxsamplesFX = Synth.new("mxfx",[\out,0,\inDelay,mxsamplesBusDelay,\inReverb,mxsamplesBusDelay]);
+		mxsamplesFX = Synth.new("mxfx",[\out,0,\inDelay,mxsamplesBusDelay,\inReverb,mxsamplesBusReverb]);
 		context.server.sync;
 
 
@@ -139,7 +146,7 @@ Engine_MxSamples : CroneEngine {
 				\hpf,msg[11],
 				\delaySend,msg[12],
 				\reverbSend,msg[13],
-				\sampleStart,msg[14] ],target:context.server).onFree({
+				\sampleStart,msg[14] ]).onFree({
 					("freed "++name).postln;
 					NetAddr("127.0.0.1", 10111).sendMsg("voice",name,0);
 				});
