@@ -9,12 +9,12 @@ local MxSamples={}
 local MaxVoices=40
 local delay_rates_names={"whole-note","half-note","quarter note","eighth note","sixteenth note","thirtysecond"}
 local delay_rates={4,2,1,1/2,1/4,1/8,1/16}
+local delay_last_clock=0
 
 local function current_time()
   return os.time()
   -- return clock.get_beat_sec()*clock.get_beats()
 end
-
 
 local function _list_files(d,files,recursive)
   -- list files in a flat table
@@ -69,7 +69,7 @@ end
 function MxSamples:new(args)
   local l=setmetatable({},{__index=MxSamples})
   local args=args==nil and {} or args
-  l.debug = args.debug --true-- args.debug -- true --args.debug
+  l.debug=args.debug --true-- args.debug -- true --args.debug
   l.instrument={} -- map instrument name to list of samples
   l.buffers_used={} -- map buffer number to data
   l.buffer=0
@@ -100,7 +100,7 @@ function MxSamples:new(args)
   end
 
   -- add parameters
-  params:add_group("MX.SAMPLES",17)
+  params:add_group("MX.SAMPLES",19)
   local filter_freq=controlspec.new(20,20000,'exp',0,20000,'Hz')
   params:add {
     type='control',
@@ -163,6 +163,11 @@ function MxSamples:new(args)
   }
   params:add {
     type='control',
+    id="mxsamples_reverb_send",
+    name="reverb send",
+  controlspec=controlspec.new(0,100,'lin',0,0,'%',1/100)}
+  params:add {
+    type='control',
     id="mxsamples_delay_send",
     name="delay send",
   controlspec=controlspec.new(0,100,'lin',0,0,'%',1/100)}
@@ -170,9 +175,15 @@ function MxSamples:new(args)
     type='control',
     id="mxsamples_delay_times",
     name="delay iterations",
-  controlspec=controlspec.new(0,100,'lin',0,0,'beats',1/100)}
-  params:add_option("mxsamples_delay_rate","delay rate",delay_rates_names)
-    params:add {
+  controlspec=controlspec.new(0,100,'lin',0,1,'beats',1/100)}
+  params:set_action("mxsamples_delay_times",function(x)
+    engine.mxsamples_delay_feedback(x/100)
+  end)
+  params:add_option("mxsamples_delay_rate","delay rate",delay_rates_names,1)
+  params:set_action("mxsamples_delay_rate",function(x)
+    engine.mxsamples_delay_beats(delay_rates[x])
+  end)
+  params:add {
     type='control',
     id="mxsamples_sample_start",
     name="sample start",
@@ -183,9 +194,10 @@ function MxSamples:new(args)
     name="play release prob",
   controlspec=controlspec.new(0,100,'lin',0,0,'%',1/100)}
   params:add_option("mxsamples_scale_velocity","scale with velocity",{"off","on"})
+  params:add_option("mxsamples_pedal_mode","pedal mode",{"sustain","sostenuto"},1)
 
   osc.event=function(path,args,from)
-    if path=="voice" then 
+    if path=="voice" then
       local voice_num=args[1]
       local onoff=args[2]
       if onoff==0 and voice_num~=nil then
@@ -193,15 +205,15 @@ function MxSamples:new(args)
         l.voice[voice_num].active={name="",midi=0}
       end
     end
-  end  
+  end
 
   return l
 end
 
 function MxSamples:max_voices(num_voices)
-  if num_voices < MaxVoices then
+  if num_voices<MaxVoices then
     engine.mxsamplesvoicenum(num_voices) -- release unused voices
-    for i=num_voices,MaxVoices do 
+    for i=num_voices,MaxVoices do
       self.voice[i]=nil
     end
   end
@@ -210,7 +222,7 @@ end
 function MxSamples:reset()
   for name,_ in pairs(self.instrument) do
     for i,_ in ipairs(self.instrument[name]) do
-      self.instrument[name][i].buffer = -1 -- reset buffer info
+      self.instrument[name][i].buffer=-1 -- reset buffer info
     end
   end
 
@@ -221,10 +233,10 @@ end
 
 function MxSamples:add_folder(sample_folder_path)
   _,sample_folder,_=string.match(sample_folder_path,"(.-)([^\\/]-%.?([^%.\\/]*))/$")
-  -- make sure it doesn't exist 
-  for name, _ in pairs(self.instrument) do 
-    if name==sample_folder then 
-      do return end 
+  -- make sure it doesn't exist
+  for name,_ in pairs(self.instrument) do
+    if name==sample_folder then
+      do return end
     end
   end
   files=list_files(sample_folder_path)
@@ -250,7 +262,7 @@ function MxSamples:add_folder(sample_folder_path)
 end
 
 function MxSamples:list_instruments()
-  local names = {}
+  local names={}
   for name,_ in pairs(self.instrument) do
     table.insert(names,name)
   end
@@ -267,7 +279,6 @@ function MxSamples:add(sample)
   end
   table.insert(self.instrument[sample.name],sample)
 end
-
 
 function MxSamples:on(d)
   -- {name="piano",midi=40,velocity=60,is_release=True|False}
@@ -321,7 +332,6 @@ function MxSamples:on(d)
     end
   end
 
-
   local voice_i=-1
   if sample_closest_loaded.buffer>-1 then
     -- assign the new voice
@@ -343,32 +353,37 @@ function MxSamples:on(d)
     if d.is_release and rate==nil then
       rate=1
     elseif rate==nil then
-      local transpose_sample = d.transpose_sample
-      if transpose_sample == nil then 
-        transpose_sample = params:get("mxsamples_transpose_sample")
+      local transpose_sample=d.transpose_sample
+      if transpose_sample==nil then
+        transpose_sample=params:get("mxsamples_transpose_sample")
       end
-      local hz = d.hz or MusicUtil.note_num_to_freq(d.midi)
-      local hz_transpose = (MusicUtil.note_num_to_freq(d.midi+transpose_sample)/MusicUtil.note_num_to_freq(d.midi))
-      if d.hz ~= nil then 
-	      hz_transpose = 1
+      local hz=d.hz or MusicUtil.note_num_to_freq(d.midi)
+      local hz_transpose=(MusicUtil.note_num_to_freq(d.midi+transpose_sample)/MusicUtil.note_num_to_freq(d.midi))
+      if d.hz~=nil then
+        hz_transpose=1
       end
       rate=hz/MusicUtil.note_num_to_freq(sample_closest_loaded.midi)*hz_transpose
     end
-    local cents = d.tune 
-    if cents == nil then 
-      cents = params:get("mxsamples_tune")
+    local cents=d.tune
+    if cents==nil then
+      cents=params:get("mxsamples_tune")
     end
-    rate = rate * (2^(cents/1200))
+    rate=rate*(2^(cents/1200))
 
     -- compute amp
     -- multiply amp by velocity curve
     local amp=params:get("mxsamples_amp")
-    local scale_amp = params:get("mxsamples_scale_velocity")==2
-    if d.scale_velocity ~= nil then 
-      scale_amp = d.scale_velocity
+    local scale_amp=params:get("mxsamples_scale_velocity")==2
+    if d.scale_velocity~=nil then
+      scale_amp=d.scale_velocity
     end
-    if scale_amp then 
-      amp = amp * d.velocity / 127 
+    if scale_amp then
+      amp=amp*d.velocity/127
+    end
+    -- update the delay if needed
+    if clock.get_beat_sec()~=delay_last_clock then
+      delay_last_clock=clock.get_beat_sec()
+      engine.mxsamples_delay_time(delay_last_clock)
     end
     engine.mxsampleson(
       voice_i,
@@ -382,12 +397,9 @@ function MxSamples:on(d)
       d.release or params:get("mxsamples_release"),
       d.lpf or params:get("mxsamples_lpf_mxsamples"),
       d.hpf or params:get("mxsamples_hpf_mxsamples"),
-      clock.get_beat_sec(),
-      d.delay_rate or delay_rates[params:get("mxsamples_delay_rate")],
-      d.delay_times or params:get("mxsamples_delay_times")/100,
       d.delay_send or params:get("mxsamples_delay_send")/100,
-      d.sample_start or params:get("mxsamples_sample_start")
-    )
+      d.reverb_send or params:get("mxsamples_reverb_send")/100,
+    d.sample_start or params:get("mxsamples_sample_start"))
   end
 
   -- load sample if not loaded
@@ -401,12 +413,12 @@ function MxSamples:on(d)
     self.buffers_used[self.buffer]={name=d.name,i=sample_closest.i}
     engine.mxsamplesload(self.buffer,sample_closest.filename)
     self.buffer=self.buffer+1
-    if self.buffer > 79 then
-      self.buffer = 0
+    if self.buffer>79 then
+      self.buffer=0
     end
     -- if this next buffer is being used, get it ready to be overridden
-    if self.buffers_used[self.buffer] ~= nil then 
-      self.instrument[self.buffers_used[self.buffer].name][self.buffers_used[self.buffer].i].buffer=-1      
+    if self.buffers_used[self.buffer]~=nil then
+      self.instrument[self.buffers_used[self.buffer].name][self.buffers_used[self.buffer].i].buffer=-1
     end
   end
 
@@ -415,7 +427,7 @@ end
 
 function MxSamples:off(d)
   -- {name="something", midi=40, is_release=True|False}
-  if d.name == nil then 
+  if d.name==nil then
     print("mx.samples error (:off): no name!")
     do return end
   end
@@ -431,18 +443,18 @@ function MxSamples:off(d)
   for i,voice in ipairs(self.voice) do
     if voice.active.name==d.name and voice.active.midi==d.midi then
       -- this is the one!
-      if self.debug then 
+      if self.debug then
         print("mxsamples: turning off "..d.name..":"..d.midi)
       end
       engine.mxsamplesoff(i)
 
       -- add a release sound effect if its not a release
       if self.instrument[d.name][1].has_release and math.random(100)<params:get("mxsamples_play_release") then
-        if self.debug then 
+        if self.debug then
           print("doing release!")
         end
         local voice_i=self:on{name=d.name,is_release=true,midi=d.midi,variation=d.variation}
-        if voice_i > 0 then 
+        if voice_i>0 then
           clock.run(function()
             clock.sleep(0.5)
             engine.mxsamplesoff(voice_i)
@@ -462,7 +474,7 @@ function MxSamples:get_voice()
       oldest={i=i,age=voice.age}
     end
   end
-  
+
   -- found none - now just take the oldest
   if oldest.i==0 then
     for i,voice in ipairs(self.voice) do
@@ -471,8 +483,8 @@ function MxSamples:get_voice()
       end
     end
   end
-  if oldest.i == 0 then 
-    oldest.i = 1
+  if oldest.i==0 then
+    oldest.i=1
   end
 
   -- turn off voice
@@ -480,6 +492,5 @@ function MxSamples:get_voice()
   self.voice[oldest.i].age=current_time()
   return oldest.i
 end
-
 
 return MxSamples

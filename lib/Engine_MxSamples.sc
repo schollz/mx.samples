@@ -3,35 +3,73 @@
 // Inherit methods from CroneEngine
 Engine_MxSamples : CroneEngine {
 
-	// MxSamples specific
+	// <mxsamples>
 	var sampleBuffMxSamples;
 	var sampleBuffMxSamplesDelay;
 	var mxsamplesMaxVoices=40;
-    var mxsamplesVoiceAlloc;
-	// MxSamples ^
+	var mxsamplesFX;
+	var mxsamplesBusDelay;
+	var mxsamplesBusReverb;
+	var fnNoteOn, fnNoteOff;
+	var mxsamplesVoices;
+	var mxsamplesVoicesOn;
+	var pedalSustainOn=false;
+	var pedalSostenutoOn=false;
+	var pedalSustainNotes;
+	var pedalSostenutoNotes;
+	// </mxsamples>
 
 	*new { arg context, doneCallback;
 		^super.new(context, doneCallback);
 	}
 
 	alloc {
-		mxsamplesVoiceAlloc=Dictionary.new(mxsamplesMaxVoices);
+		// <mxsamples>
+		mxsamplesVoices=Dictionary.new;
+		mxsamplesVoicesOn=Dictionary.new;
+		pedalSustainNotes=Dictionary.new;
+		pedalSostenutoNotes=Dictionary.new;
 
 		context.server.sync;
 
 		sampleBuffMxSamples = Array.fill(80, { arg i; 
 			Buffer.new(context.server);
 		});
-		sampleBuffMxSamplesDelay = Array.fill(mxsamplesMaxVoices, { arg i; 
-			Buffer.alloc(context.server,48000,2);
-		});
+		sampleBuffMxSamplesDelay = Buffer.alloc(context.server,48000,2);
+
+		SynthDef("mxfx",{ 
+			arg inDelay, inReverb, reverb=0.05, out, secondsPerBeat=1,delayBeats=4,delayFeedback=0.1,bufnumDelay;
+			var snd,snd2,y,z;
+
+			// delay
+			snd = In.ar(inDelay,2);
+			snd = CombC.ar(
+				snd,
+				2,
+				secondsPerBeat*delayBeats,
+				secondsPerBeat*delayBeats*LinLin.kr(delayFeedback,0,1,2,128),// delayFeedback should vary between 2 and 128
+			); 
+			Out.ar(out,snd);
+
+			// reverb
+			// reverb predelay time :
+			snd2 = In.ar(inReverb,2);
+			z = DelayN.ar(snd2, 0.048);
+			// 7 length modulated comb delays in parallel :
+			y = Mix.ar(Array.fill(7,{ CombL.ar(z, 0.1, LFNoise1.kr(0.1.rand, 0.04, 0.05), 15) }));
+			// two parallel chains of 4 allpass delays (8 total) :
+			4.do({ y = AllpassN.ar(y, 0.050, [0.050.rand, 0.050.rand], 1) });
+			// add original sound to reverb and play it :
+			snd2=y;
+			snd2=HPF.ar(snd2,20);
+			Out.ar(out,snd2);
+		}).add;
 
 		SynthDef("mxPlayer",{ 
-				arg bufnum,bufnumDelay, amp, t_trig=0,envgate=1,name=1,
+				arg outDelay,outReverb,bufnum, amp=0.0, t_trig=0,envgate=1,name=1,
 				attack=0.015,decay=1,release=2,sustain=0.9,
 				sampleStart=0,sampleEnd=1,rate=1,pan=0,
-				lpf=20000,hpf=10,
-				secondsPerBeat=1,delayBeats=8,delayFeedback=1,delaySend=0;
+				lpf=20000,hpf=10,delaySend=0,reverbSend=0;
 
 				// vars
 				var ender,snd;
@@ -48,30 +86,52 @@ Engine_MxSamples : CroneEngine {
 				
 				snd = PlayBuf.ar(2, bufnum,
 					rate:BufRateScale.kr(bufnum)*rate,
-				 	startPos: ((sampleEnd*(rate<0))*BufFrames.kr(bufnum))+(sampleStart/1000*48000),
-				 	trigger:t_trig,
+					startPos: ((sampleEnd*(rate<0))*BufFrames.kr(bufnum))+(sampleStart/1000*48000),
+					trigger:t_trig,
 				);
-		        snd = LPF.ar(snd,lpf);
-		        snd = HPF.ar(snd,hpf);
+				snd = LPF.ar(snd,lpf);
+				snd = HPF.ar(snd,hpf);
 				snd = Mix.ar([
 					Pan2.ar(snd[0],-1+(2*pan),amp),
 					Pan2.ar(snd[1],1+(2*pan),amp),
 				]);
 				snd = snd * amp * ender;
-		        snd = snd*0.5 +
-		        	((delaySend>0)*BufCombN.ar(
-		        		bufnumDelay,
-		        		snd,
-						secondsPerBeat*delayBeats,secondsPerBeat*delayBeats*LinLin.kr(delayFeedback,0,1,2,128),0.5*delaySend // delayFeedback should vary between 2 and 128
-					)); 
-					// delay w/ 30 voices = 1.5% (one core) per voice
-					// w/o delay w/ 30 voices = 1.1% (one core) per voice
+
 				// SendTrig.kr(Impulse.kr(1),name,1);
 				DetectSilence.ar(snd,doneAction:2);
 				// just in case, release after 1 minute
 				FreeSelf.kr(TDelay.kr(DC.kr(1),60));
+				Out.ar(outDelay,snd*delaySend);
+				Out.ar(outReverb,snd*reverbSend);
 				Out.ar(0,snd)
 		}).add;	
+
+		// initialize fx synth and bus
+		context.server.sync;
+		mxsamplesBusDelay = Bus.audio(context.server,2);
+		mxsamplesBusReverb = Bus.audio(context.server,2);
+		context.server.sync;
+		mxsamplesFX = Synth.new("mxfx",[\out,0,\inDelay,mxsamplesBusDelay,\inReverb,mxsamplesBusReverb]);
+		context.server.sync;
+
+
+		// initialize 
+		// intialize helper functions		
+		fnNoteOff = {
+			arg name;
+			mxsamplesVoicesOn.removeAt(name);
+			if (pedalSustainOn==true,{
+				pedalSustainNotes.put(name,1);
+			},{
+				if ((pedalSostenutoOn==true)&&(pedalSostenutoNotes.at(name)!=nil),{
+					// do nothing, it is a sostenuto note
+				},{
+					// remove the sound
+					mxsamplesVoices.at(name).set(\envgate,0);
+				});
+			});
+		};
+
 
 		this.addCommand("mxsamplesrelease","", { arg msg;
 			(0..79).do({arg i; sampleBuffMxSamples[i].free});
@@ -82,58 +142,100 @@ Engine_MxSamples : CroneEngine {
 			sampleBuffMxSamples[msg[1]] = Buffer.read(context.server,msg[2]);
 		});
 
-		this.addCommand("mxsampleson","iiffffffffffffff", { arg msg;
+		this.addCommand("mxsampleson","iiffffffffffff", { arg msg;
 			var name=msg[1];
-			if (mxsamplesVoiceAlloc.at(name)!=nil,{
-				if (mxsamplesVoiceAlloc.at(name).isRunning==true,{
+			if (mxsamplesVoices.at(name)!=nil,{
+				if (mxsamplesVoices.at(name).isRunning==true,{
 					("stealing "++name).postln;
-					mxsamplesVoiceAlloc.at(name).free;
+					mxsamplesVoices.at(name).free;
 				});
 			});
-			mxsamplesVoiceAlloc.put(name,
-				Synth("mxPlayer",[
-				\bufnumDelay,sampleBuffMxSamplesDelay[msg[1]-1],
-				\t_trig,1,
-				\envgate,1,
-				\bufnum,msg[2],
-				\rate,msg[3],
-				\amp,msg[4],
-				\pan,msg[5],
-				\attack,msg[6],
-				\decay,msg[7],
-				\sustain,msg[8],
-				\release,msg[9],
-				\lpf,msg[10],
-				\hpf,msg[11],
-				\secondsPerBeat,msg[12],
-				\delayBeats,msg[13],
-				\delayFeedback,msg[14],
-				\delaySend,msg[15],
-				\sampleStart,msg[16] ],target:context.server).onFree({
+			mxsamplesVoices.put(name,
+				Synth.before(mxsamplesFX,"mxPlayer",[
+					\t_trig,1,
+					\outDelay,mxsamplesBusDelay,
+					\outReverb,mxsamplesBusReverb,
+					\envgate,1,
+					\bufnum,msg[2],
+					\rate,msg[3],
+					\amp,msg[4],
+					\pan,msg[5],
+					\attack,msg[6],
+					\decay,msg[7],
+					\sustain,msg[8],
+					\release,msg[9],
+					\lpf,msg[10],
+					\hpf,msg[11],
+					\delaySend,msg[12],
+					\reverbSend,msg[13],
+					\sampleStart,msg[14] ]).onFree({
 					("freed "++name).postln;
 					NetAddr("127.0.0.1", 10111).sendMsg("voice",name,0);
 				});
 			);
-			NodeWatcher.register(mxsamplesVoiceAlloc.at(name));
+			mxsamplesVoicesOn.put(name,1);
+			NodeWatcher.register(mxsamplesVoices.at(name));
 		});
 
 		this.addCommand("mxsamplesoff","i", { arg msg;
 			// lua is sending 1-index
 			var name=msg[1];
-			if (mxsamplesVoiceAlloc.at(name)!=nil,{
-				if (mxsamplesVoiceAlloc.at(name).isRunning==true,{
-					mxsamplesVoiceAlloc.at(name).set(
-						\envgate,0,
-					);
+			if (mxsamplesVoices.at(name)!=nil,{
+				if (mxsamplesVoices.at(name).isRunning==true,{
+					fnNoteOff.(name);
 				});
 			});
 		});
+
+		this.addCommand("mxsamples_delay_time","f", { arg msg;
+			mxsamplesFX.set(\secondsPerBeat,msg[1])
+		});
+
+		this.addCommand("mxsamples_delay_beats","f", { arg msg;
+			mxsamplesFX.set(\delayBeats,msg[1])
+		});
+
+		this.addCommand("mxsamples_delay_feedback","f", { arg msg;
+			mxsamplesFX.set(\delayFeedback,msg[1])
+		});
+
+		this.addCommand("mxsamples_sustain", "i", { arg msg;
+			pedalSustainOn=(msg[1]==1);
+			if (pedalSustainOn==false,{
+				// release all sustained notes
+				pedalSustainNotes.keysValuesDo({ arg name, val; 
+					fnNoteOff.(name);
+					pedalSustainNotes.removeAt(name);
+				});
+			});
+		});
+
+		this.addCommand("mxsamples_sustenuto", "i", { arg msg;
+			pedalSostenutoOn=(msg[1]==1);
+			if (pedalSostenutoOn==false,{
+				// release all sustained notes
+				pedalSostenutoNotes.keysValuesDo({ arg name, val; 
+					fnNoteOff.(name);
+					pedalSostenutoNotes.removeAt(name);
+				});
+			},{
+				// add currently held notes
+				mxsamplesVoicesOn.keysValuesDo({ arg name, val;
+					pedalSostenutoNotes.put(name,1);
+				});
+			});
+		});
+
+
 
 	}
 
 	free {
 		(0..79).do({arg i; sampleBuffMxSamples[i].free});
-		(mxsamplesMaxVoices).do({arg i; sampleBuffMxSamplesDelay[i].free;});
-    	mxsamplesVoiceAlloc.keysValuesDo({ arg key, value; value.free; });
+		mxsamplesVoices.keysValuesDo({ arg key, value; value.free; });
+		mxsamplesBusDelay.free;
+		mxsamplesBusReverb.free;
+		mxsamplesFX.free;
+		sampleBuffMxSamplesDelay.free;
 	}
 }
