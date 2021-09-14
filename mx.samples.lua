@@ -85,6 +85,10 @@ function init()
     end
   end
 
+  -- set default delay
+  params:set("mxsamples_delay_rate",4)
+  params:set("mxsamples_delay_times",4)
+
   print("available instruments: ")
   tab.print(skeys:list_instruments())
   clock.run(redraw_clock)
@@ -124,6 +128,18 @@ function setup_midi()
           skeys:on({name=available_instruments[instrument_current].id,midi=data[2],velocity=data[3]})
         elseif d.type=="note_off" then
           skeys:off({name=available_instruments[instrument_current].id,midi=data[2]})
+        elseif d.cc==64 then -- sustain pedal
+          local val=d.val
+          if val>126 then
+            val=1
+          else
+            val=0
+          end
+          if params:get("mxsamples_pedal_mode")==1 then
+            engine.mxsamples_sustain(val)
+          else
+            engine.mxsamples_sustenuto(val)
+          end
         end
       end
     end

@@ -100,7 +100,7 @@ function MxSamples:new(args)
   end
 
   -- add parameters
-  params:add_group("MX.SAMPLES",18)
+  params:add_group("MX.SAMPLES",19)
   local filter_freq=controlspec.new(20,20000,'exp',0,20000,'Hz')
   params:add {
     type='control',
@@ -175,11 +175,11 @@ function MxSamples:new(args)
     type='control',
     id="mxsamples_delay_times",
     name="delay iterations",
-  controlspec=controlspec.new(0,100,'lin',0,4,'beats',1/100)}
+  controlspec=controlspec.new(0,100,'lin',0,1,'beats',1/100)}
   params:set_action("mxsamples_delay_times",function(x)
     engine.mxsamples_delay_feedback(x/100)
   end)
-  params:add_option("mxsamples_delay_rate","delay rate",delay_rates_names,4)
+  params:add_option("mxsamples_delay_rate","delay rate",delay_rates_names,1)
   params:set_action("mxsamples_delay_rate",function(x)
     engine.mxsamples_delay_beats(delay_rates[x])
   end)
@@ -194,9 +194,8 @@ function MxSamples:new(args)
     name="play release prob",
   controlspec=controlspec.new(0,100,'lin',0,0,'%',1/100)}
   params:add_option("mxsamples_scale_velocity","scale with velocity",{"off","on"})
+  params:add_option("mxsamples_pedal_mode","pedal mode",{"sustain","sostenuto"},1)
 
-  engine.mxsamples_delay_feedback(4/100)
-  engine.mxsamples_delay_beats(delay_rates[4])
   osc.event=function(path,args,from)
     if path=="voice" then
       local voice_num=args[1]
