@@ -18,6 +18,7 @@ download_available=0
 instrument_current=1
 available_instruments={
   {name="alto sax choir",size=17*1.5},
+  {name="angelic dobro",size=35},
   {name="box violin",size=8*1.5},
   {name="cello",size=22*1.5},
   {name="cello pad",size=4*1.5},
