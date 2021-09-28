@@ -54,7 +54,7 @@ Engine_MxSamples : CroneEngine {
 			// reverb
 			snd2 = In.ar(inReverb,2);
 			snd2 = DelayN.ar(snd2, 0.03, 0.03);
-			snd2 = CombN.ar(snd2, 0.1, {Rand(0.01,0.099)}!32, dec);
+			snd2 = CombN.ar(snd2, 0.1, {Rand(0.01,0.099)}!32, 4);
 			snd2 = SplayAz.ar(2, snd2);
 			snd2 = LPF.ar(snd2, 1500);
 			5.do{snd2 = AllpassN.ar(snd2, 0.1, {Rand(0.01,0.099)}!2, 3)};
