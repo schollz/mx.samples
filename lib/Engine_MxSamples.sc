@@ -52,16 +52,14 @@ Engine_MxSamples : CroneEngine {
 			Out.ar(out,snd);
 
 			// reverb
-			// reverb predelay time :
 			snd2 = In.ar(inReverb,2);
-			z = DelayN.ar(snd2, 0.048);
-			// 7 length modulated comb delays in parallel :
-			y = Mix.ar(Array.fill(7,{ CombL.ar(z, 0.1, LFNoise1.kr(0.1.rand, 0.04, 0.05), 15) }));
-			// two parallel chains of 4 allpass delays (8 total) :
-			4.do({ y = AllpassN.ar(y, 0.050, [0.050.rand, 0.050.rand], 1) });
-			// add original sound to reverb and play it :
-			snd2=y;
-			snd2=HPF.ar(snd2,20);
+			snd2 = DelayN.ar(snd2, 0.03, 0.03);
+			snd2 = CombN.ar(snd2, 0.1, {Rand(0.01,0.099)}!32, 4);
+			snd2 = SplayAz.ar(2, snd2);
+			snd2 = LPF.ar(snd2, 1500);
+			5.do{snd2 = AllpassN.ar(snd2, 0.1, {Rand(0.01,0.099)}!2, 3)};
+			snd2 = LPF.ar(snd2, 1500);
+			snd2 = LeakDC.ar(snd2);
 			Out.ar(out,snd2);
 		}).add;
 
