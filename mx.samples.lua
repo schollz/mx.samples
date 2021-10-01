@@ -70,7 +70,8 @@ available_instruments={
   {name="sweep trumpet",size=50},
   {name="sweep violins",size=50},
   {name="tatak piano",size=127*1.5},
-  {name="tremling radiator ebow",size=16*1.5},
+  {name="trembling radiator",size=16*1.5},
+  {name="trembling radiator ebow",size=16*1.5},
   {name="uilleann pipes",size=117},
   {name="wind chimes",size=5},
 }
