@@ -177,11 +177,15 @@ function MxSamples:new(args)
     name="delay iterations",
   controlspec=controlspec.new(0,100,'lin',0,1,'beats',1/100)}
   params:set_action("mxsamples_delay_times",function(x)
-    engine.mxsamples_delay_feedback(x/100)
+    if engine.name=="MxSamples" then
+      engine.mxsamples_delay_feedback(x/100)
+    end
   end)
   params:add_option("mxsamples_delay_rate","delay rate",delay_rates_names,1)
   params:set_action("mxsamples_delay_rate",function(x)
-    engine.mxsamples_delay_beats(delay_rates[x])
+    if engine.name=="MxSamples" then
+      engine.mxsamples_delay_beats(delay_rates[x])
+    end
   end)
   params:add {
     type='control',
