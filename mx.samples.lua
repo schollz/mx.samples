@@ -1,4 +1,4 @@
--- mx.samples v1.4.1
+-- mx.samples v1.4.2
 -- download and play samples
 --
 -- llllllll.co/t/mxsamples
