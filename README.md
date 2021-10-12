@@ -64,12 +64,20 @@ skeys:on({
 
 ### getting samples
 
-this script will allow you to download samples that i've already processed. in theory you can use any kontakt / vst sample pack if you have access to the raw audio. in the `samples/` folder there is a utility script `convert.py` that is specific to each type of sample and shows basically how its done (its easy). here's [an example for the UofI piano](https://github.com/schollz/mx.samples/blob/main/samples/steinway_model_b/convert.py).
+this script will allow you to download samples that i've already processed. in theory you can use any kontakt / vst sample pack if you have access to the raw audio.
+
+in the `samples/` folder there is a utility script [`convert_samples.py`](./samples/convert_samples.py) that will try to convert raw audio sample sets. ideal candidates have filenames that include:
+
+- a note value (a3, f#4)
+- if there are multiple dynamic levels, a dynamics value (pp, mf, f)
+
+sample packs with different file naming conventions may need some manual processing (or script changes) to be processed. in particular, check whether the sample pack contains different versions that should be separated before running the script. for example, there might be both a "clean" version and a "distorted" version bundled together. 
 
 the current samples are from the following sources, which are free and do not restrict to distributing them for this purpose:
 
 - The University of Iowa Musical Instrument Samples database which ["may be downloaded and used for any projects, without restrictions"](http://theremin.music.uiowa.edu/MIS.html).
 - the pianobook which states that ["There are NO restrictions on their use (except selling them on as your own samples)"](https://www.pianobook.co.uk/faq/)
+
 
 ## download
 
