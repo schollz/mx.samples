@@ -16,7 +16,7 @@ velocities[2]={0,2,3,4,6,7,8,10,11,13,14,15,17,18,19,21,22,23,25,26,27,29,30,31,
 velocities[3]={1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,4,4,4,4,5,5,5,5,6,6,6,6,7,7,7,8,8,8,9,9,9,10,10,11,11,12,12,13,13,14,14,15,15,16,16,17,18,18,19,20,20,21,22,23,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,42,43,44,45,47,48,49,51,52,54,55,57,58,60,62,63,65,66,68,70,72,73,75,77,79,80,82,84,86,88,90,92,94,95,97,99,101,103,105,107,109,111,113,115,117,119,121,123,125,127}
 velocities[4]={}
 for i=1,128 do
-  table.insert(l.velocities[4],64)
+  table.insert(velocities[4],64)
 end
 
 local function current_time()
@@ -302,10 +302,13 @@ function MxSamples:on(d)
     d.is_release=false
   end
   if d.velocity==nil then
-    d.velocity=64
+    d.velocity=72
   end
-  -- scale velocity depending on sensitivity
-  d.velocity=velocities[params:get("mxsamples_scale_velocity")][math.floor(d.velocity+1)]
+
+  if params:get("mxsamples_scale_velocity")<4 then
+    -- scale velocity depending on sensitivity
+    d.velocity=velocities[params:get("mxsamples_scale_velocity")][math.floor(d.velocity+1)]
+  end
 
   d.dynamic=1
   if self.instrument[d.name][1].dynamics>1 then
@@ -387,7 +390,9 @@ function MxSamples:on(d)
     -- compute amp
     -- multiply amp by velocity curve
     local amp=params:get("mxsamples_amp")
-    amp=amp*d.velocity/127
+    if params:get("mxsamples_scale_velocity")<4 then
+      amp=amp*d.velocity/127
+    end
 
     -- update the delay if needed
     if clock.get_beat_sec()~=delay_last_clock then
