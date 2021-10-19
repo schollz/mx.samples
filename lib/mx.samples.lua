@@ -10,6 +10,14 @@ local MaxVoices=40
 local delay_rates_names={"whole-note","half-note","quarter note","eighth note","sixteenth note","thirtysecond"}
 local delay_rates={4,2,1,1/2,1/4,1/8,1/16}
 local delay_last_clock=0
+local velocities={}
+velocities[1]={1,4,7,10,13,16,19,22,25,28,31,34,38,41,43,46,49,52,55,57,60,62,64,66,68,70,71,73,74,76,77,79,80,81,83,84,85,86,87,89,90,91,92,93,94,95,95,96,97,98,99,99,100,101,102,102,103,104,104,105,105,106,106,107,107,108,108,109,109,109,110,110,111,111,111,112,112,112,112,113,113,113,114,114,114,114,115,115,115,115,115,116,116,116,116,116,117,117,117,117,118,118,118,118,118,119,119,119,120,120,120,120,121,121,121,122,122,122,123,123,124,124,124,125,125,126,126,127}
+velocities[2]={0,2,3,4,6,7,8,10,11,13,14,15,17,18,19,21,22,23,25,26,27,29,30,31,33,34,35,37,38,39,40,42,43,44,45,47,48,49,50,52,53,54,55,57,58,59,60,61,62,64,65,66,67,68,69,70,71,72,73,75,76,77,78,79,80,81,82,83,83,84,85,86,87,88,89,90,91,92,92,93,94,95,96,97,97,98,99,100,100,101,102,103,103,104,105,106,106,107,108,109,109,110,111,111,112,113,113,114,115,115,116,117,117,118,119,119,120,120,121,122,122,123,124,124,125,126,126,127}
+velocities[3]={1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,4,4,4,4,5,5,5,5,6,6,6,6,7,7,7,8,8,8,9,9,9,10,10,11,11,12,12,13,13,14,14,15,15,16,16,17,18,18,19,20,20,21,22,23,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,42,43,44,45,47,48,49,51,52,54,55,57,58,60,62,63,65,66,68,70,72,73,75,77,79,80,82,84,86,88,90,92,94,95,97,99,101,103,105,107,109,111,113,115,117,119,121,123,125,127}
+velocities[4]={}
+for i=1,128 do
+  table.insert(l.velocities[4],64)
+end
 
 local function current_time()
   return os.time()
@@ -197,7 +205,7 @@ function MxSamples:new(args)
     id="mxsamples_play_release",
     name="play release prob",
   controlspec=controlspec.new(0,100,'lin',0,0,'%',1/100)}
-  params:add_option("mxsamples_scale_velocity","scale with velocity",{"off","on"})
+  params:add_option("mxsamples_scale_velocity","velocity sensitivity",{"delicate","normal","stiff","fixed"},4)
   params:add_option("mxsamples_pedal_mode","pedal mode",{"sustain","sostenuto"},1)
 
   osc.event=function(path,args,from)
@@ -294,8 +302,10 @@ function MxSamples:on(d)
     d.is_release=false
   end
   if d.velocity==nil then
-    d.velocity=127
+    d.velocity=64
   end
+  -- scale velocity depending on sensitivity
+  d.velocity=velocities[params:get("mxsamples_scale_velocity")][math.floor(d.velocity+1)]
 
   d.dynamic=1
   if self.instrument[d.name][1].dynamics>1 then
@@ -377,13 +387,8 @@ function MxSamples:on(d)
     -- compute amp
     -- multiply amp by velocity curve
     local amp=params:get("mxsamples_amp")
-    local scale_amp=params:get("mxsamples_scale_velocity")==2
-    if d.scale_velocity~=nil then
-      scale_amp=d.scale_velocity
-    end
-    if scale_amp then
-      amp=amp*d.velocity/127
-    end
+    amp=amp*d.velocity/127
+
     -- update the delay if needed
     if clock.get_beat_sec()~=delay_last_clock then
       delay_last_clock=clock.get_beat_sec()
