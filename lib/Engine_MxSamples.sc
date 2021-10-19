@@ -201,9 +201,16 @@ Engine_MxSamples : CroneEngine {
 			pedalSustainOn=(msg[1]==1);
 			if (pedalSustainOn==false,{
 				// release all sustained notes
-				pedalSustainNotes.keysValuesDo({ arg name, val; 
-					fnNoteOff.(name);
-					pedalSustainNotes.removeAt(name);
+				pedalSustainNotes.keysValuesDo({ arg note, val; 
+					if (mxsamplesVoicesOn.at(note)==nil,{
+						pedalSustainNotes.removeAt(note);
+						fnNoteOff.(note);
+					});
+				});
+			},{
+				// add currently down notes to the pedal
+				mxsamplesVoicesOn.keysValuesDo({ arg note, val; 
+					pedalSustainNotes.put(note,1);
 				});
 			});
 		});
@@ -212,14 +219,16 @@ Engine_MxSamples : CroneEngine {
 			pedalSostenutoOn=(msg[1]==1);
 			if (pedalSostenutoOn==false,{
 				// release all sustained notes
-				pedalSostenutoNotes.keysValuesDo({ arg name, val; 
-					fnNoteOff.(name);
-					pedalSostenutoNotes.removeAt(name);
+				pedalSostenutoNotes.keysValuesDo({ arg note, val; 
+					if (mxsamplesVoicesOn.at(note)==nil,{
+						pedalSostenutoNotes.removeAt(note);
+						fnNoteOff.(note);
+					});
 				});
 			},{
 				// add currently held notes
-				mxsamplesVoicesOn.keysValuesDo({ arg name, val;
-					pedalSostenutoNotes.put(name,1);
+				mxsamplesVoicesOn.keysValuesDo({ arg note, val;
+					pedalSostenutoNotes.put(note,1);
 				});
 			});
 		});
