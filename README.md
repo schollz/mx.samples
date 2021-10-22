@@ -73,6 +73,8 @@ in the `samples/` folder there is a utility script [`convert_samples.py`](./samp
 
 sample packs with different file naming conventions may need some manual processing (or script changes) to be processed. in particular, check whether the sample pack contains different versions that should be separated before running the script. for example, there might be both a "clean" version and a "distorted" version bundled together. 
 
+usage is `python convert_samples.py $SAMPLE_FOLDER $OUTPUT_FOLDER`.
+
 the current samples are from the following sources, which are free and do not restrict to distributing them for this purpose:
 
 - The University of Iowa Musical Instrument Samples database which ["may be downloaded and used for any projects, without restrictions"](http://theremin.music.uiowa.edu/MIS.html).
