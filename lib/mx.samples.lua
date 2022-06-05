@@ -74,6 +74,14 @@ local function split_str(inputstr,sep)
   return t
 end
 
+local function freq_to_midi(freq)
+  return 12 * math.log10(freq / 440) / math.log10(2) + 69
+end
+
+local function midi_to_freq(midi)
+  return 440 * math.exp(.057762265 * (midi - 69))
+end
+
 function MxSamples:new(args)
   local l=setmetatable({},{__index=MxSamples})
   local args=args==nil and {} or args
@@ -330,19 +338,26 @@ function MxSamples:on(d)
     table.insert(sample_is,i)
   end
   -- shuffle
+
   local sample_is_shuffled={}
   for i,v in ipairs(sample_is) do
     local pos=math.random(1,#sample_is_shuffled+1)
     table.insert(sample_is_shuffled,pos,v)
   end
+
+  -- for z_tuning compatibility
+  -- convert direct midi note to frequency using MusicUtil.note_num_to_freq, which is altered by z_tuning, then convert the result to midi value using a standart locale function
+  local note_in_freq = MusicUtil.note_num_to_freq(d.midi)
+  local note_in_midi = freq_to_midi(note_in_freq)
+  
   for _,i in ipairs(sample_is_shuffled) do
     local sample=self.instrument[d.name][i]
     if (d.dynamic==sample.dynamic and d.is_release==sample.is_release) or (d.is_release==true and sample.is_release==true) then
-      if math.abs(sample.midi-d.midi)<math.abs(sample_closest.midi-d.midi) then
+      if math.abs(sample.midi - note_in_midi )<math.abs(sample_closest.midi - note_in_midi) then
         sample_closest=sample
         sample_closest.i=i
       end
-      if math.abs(sample.midi-d.midi)<math.abs(sample_closest_loaded.midi-d.midi) and sample.buffer>-1 then
+      if math.abs(sample.midi - note_in_midi)<math.abs(sample_closest_loaded.midi - note_in_midi) and sample.buffer>-1 then
         sample_closest_loaded=sample
         sample_closest_loaded.i=i
       end
@@ -379,7 +394,7 @@ function MxSamples:on(d)
       if d.hz~=nil then
         hz_transpose=1
       end
-      rate=hz/MusicUtil.note_num_to_freq(sample_closest_loaded.midi)*hz_transpose
+      rate=hz/midi_to_freq(sample_closest_loaded.midi)*hz_transpose
     end
     local cents=d.tune
     if cents==nil then
