@@ -154,7 +154,7 @@ Engine_MxSamples : CroneEngine {
 					\outDelay,mxsamplesBusDelay,
 					\outReverb,mxsamplesBusReverb,
 					\envgate,1,
-					\bufnum,msg[2],
+					\bufnum,sampleBuffMxSamples[msg[2]],
 					\rate,msg[3],
 					\amp,msg[4],
 					\pan,msg[5],
