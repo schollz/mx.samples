@@ -67,10 +67,10 @@ Engine_MxSamples : CroneEngine {
 				arg outDelay,outReverb,bufnum, amp=0.0, t_trig=0,envgate=1,name=1,
 				attack=0.015,decay=1,release=2,sustain=0.9,
 				sampleStart=0,sampleEnd=1,rate=1,pan=0,
-				lpf=20000,hpf=10,delaySend=0,reverbSend=0;
+				lpf=20000,hpf=10,delaySend=0,reverbSend=0, noiseLevel=0;
 
 				// vars
-				var ender,snd;
+				var ender,snd, noise;
 
 				ender = EnvGen.ar(
 					Env.new(
@@ -94,6 +94,16 @@ Engine_MxSamples : CroneEngine {
 					Pan2.ar(snd[1],1+(2*pan),amp),
 				]);
 				snd = snd * amp * ender;
+
+				// Noise
+				noise = HPF.ar(in: Mix.new([PinkNoise.ar(0.5), Dust.ar(5,1)]),
+											 freq: 2000,
+											 mul: Amplitude.kr(snd,
+											 									 attackTime: 0.1,
+											 									 releaseTime: 0.5,
+																				 mul: noiseLevel));
+				
+				snd = Mix.new([snd, noise]);
 
 				// SendTrig.kr(Impulse.kr(1),name,1);
 				DetectSilence.ar(snd,doneAction:2);
@@ -140,7 +150,7 @@ Engine_MxSamples : CroneEngine {
 			sampleBuffMxSamples[msg[1]] = Buffer.read(context.server,msg[2]);
 		});
 
-		this.addCommand("mxsampleson","iiffffffffffff", { arg msg;
+		this.addCommand("mxsampleson","iifffffffffffff", { arg msg;
 			var name=msg[1];
 			if (mxsamplesVoices.at(name)!=nil,{
 				if (mxsamplesVoices.at(name).isRunning==true,{
@@ -166,7 +176,8 @@ Engine_MxSamples : CroneEngine {
 					\hpf,msg[11],
 					\delaySend,msg[12],
 					\reverbSend,msg[13],
-					\sampleStart,msg[14] ]).onFree({
+					\sampleStart,msg[14],
+					\noiseLevel,msg[15] ]).onFree({
 					("freed "++name).postln;
 					NetAddr("127.0.0.1", 10111).sendMsg("voice",name,0);
 				});

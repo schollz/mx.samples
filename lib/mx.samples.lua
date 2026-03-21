@@ -116,7 +116,7 @@ function MxSamples:new(args)
   end
 
   -- add parameters
-  params:add_group("MX.SAMPLES",19)
+  params:add_group("MX.SAMPLES",20)
   local filter_freq=controlspec.new(20,20000,'exp',0,20000,'Hz')
   params:add {
     type='control',
@@ -208,6 +208,11 @@ function MxSamples:new(args)
     id="mxsamples_sample_start",
     name="sample start",
   controlspec=controlspec.new(0,1000,'lin',0,0,'ms',1/1000)}
+  params:add {
+    type = "control",
+    id = "mxsamples_noise_level",
+    name = "noise level",
+  controlspec = controlspec.new(0, 10, 'lin', 0, 0, 'x', 0.01)}
   params:add {
     type='control',
     id="mxsamples_play_release",
@@ -428,7 +433,8 @@ function MxSamples:on(d)
       d.hpf or params:get("mxsamples_hpf_mxsamples"),
       d.delay_send or params:get("mxsamples_delay_send")/100,
       d.reverb_send or params:get("mxsamples_reverb_send")/100,
-    d.sample_start or params:get("mxsamples_sample_start"))
+      d.sample_start or params:get("mxsamples_sample_start"),
+      d.noise_level or params:get("mxsamples_noise_level"))
   end
 
   -- load sample if not loaded
